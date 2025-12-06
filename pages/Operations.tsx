@@ -1,0 +1,142 @@
+import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/api';
+import { downloadCSV } from '../lib/export';
+import { Project, Task } from '../types';
+
+export const Operations: React.FC = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch('/api/v1/projects'),
+      apiFetch('/api/v1/tasks')
+    ]).then(([p, t]) => {
+      setProjects(p);
+      setTasks(t);
+      setLoading(false);
+    });
+  }, []);
+
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">Operations</h2>
+          <p className="text-slate-500">Manage projects, tasks, and deliverables.</p>
+        </div>
+        <div className="flex space-x-3">
+           <button 
+             onClick={() => downloadCSV(projects, 'projects_export')}
+             className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+           >
+             <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+             Export Projects
+           </button>
+           <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+             + New Project
+           </button>
+        </div>
+      </div>
+
+      {/* Projects Section */}
+      <section>
+        <h3 className="text-lg font-bold text-slate-900 mb-4">Active Projects</h3>
+        {loading ? (
+          <div className="h-32 bg-slate-100 rounded-xl animate-pulse"></div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {projects.map((proj) => (
+              <div key={proj.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between h-48 hover:shadow-md transition-shadow">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-slate-900 line-clamp-1">{proj.name}</h4>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      proj.status === 'active' ? 'bg-green-100 text-green-800' :
+                      proj.status === 'delayed' ? 'bg-red-100 text-red-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {proj.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-500 mb-1">Mgr: {proj.manager}</p>
+                  <p className="text-sm text-slate-500">Due: {proj.dueDate}</p>
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-50 flex justify-between items-center">
+                  <span className="text-sm font-medium text-slate-900">${proj.budget.toLocaleString()}</span>
+                  <button className="text-indigo-600 text-sm font-medium hover:underline">View Details</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Tasks Section */}
+      <section>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-slate-900">All Tasks</h3>
+          <div className="flex space-x-3">
+            <button 
+              onClick={() => downloadCSV(tasks, 'tasks_export')}
+              className="text-sm text-slate-600 hover:text-indigo-600 font-medium flex items-center"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export CSV
+            </button>
+            <button className="text-sm text-indigo-600 font-medium hover:underline">+ New Task</button>
+          </div>
+        </div>
+        
+        <div className="bg-white shadow-sm rounded-xl border border-slate-100 overflow-hidden">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Task</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Project</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Assignee</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Due Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Priority</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-slate-200">
+              {loading ? (
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-400">Loading tasks...</td></tr>
+              ) : tasks.map((task) => {
+                const project = projects.find(p => p.id === task.projectId);
+                return (
+                  <tr key={task.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{task.title}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{project?.name || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{task.assignedTo}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{task.dueDate}</td>
+                    <td className="px-6 py-4">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                        task.priority === 'high' ? 'bg-red-50 text-red-600' :
+                        task.priority === 'medium' ? 'bg-yellow-50 text-yellow-600' :
+                        'bg-slate-100 text-slate-600'
+                      }`}>
+                        {task.priority.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        task.status === 'done' ? 'bg-green-100 text-green-800' :
+                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                        'bg-slate-100 text-slate-800'
+                      }`}>
+                        {task.status === 'in_progress' ? 'In Progress' : task.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+};

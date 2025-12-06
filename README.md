@@ -1,11 +1,32 @@
-<div align="center">
+# WorkCore OS - Unified Operating System for SMEs
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+## Project Overview
+WorkCore OS is a multi-tenant SaaS platform unifying Sales, Operations, Finance, Inventory, HR, and Communications for small & medium businesses.
 
-  <h1>Built with AI Studio</h2>
+## Tech Stack
+- **Frontend Web**: React (Next.js patterns) + TailwindCSS
+- **Mobile**: React Native + Expo (Planned)
+- **Backend**: NestJS Microservices (Planned)
+- **Database**: PostgreSQL + Redis
+- **Infra**: Docker + Kubernetes
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## Project Structure (Monorepo)
+```
+/apps
+  /web          # Dashboard & Management Portal (Current)
+  /mobile       # Offline-first Mobile App
+/services
+  /auth         # Authentication & User Management
+  /sales        # Leads, Quotations, Invoices
+  /finance      # Payments & Reconciliation
+  /inventory    # Stock & Warehouses
+  /hr           # Employee Management
+  /comms        # WhatsApp & Email Integration
+  /ai           # Gemini-powered Insights
+```
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
-
-</div>
+## Getting Started
+This skeleton demonstrates the **Web Frontend** architecture.
+- `lib/api.ts`: Mock API layer simulating the BFF (Backend-for-Frontend).
+- `services/geminiService.ts`: AI Integration.
+- `pages/`: Modular feature pages.

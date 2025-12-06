@@ -1,0 +1,405 @@
+import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/api';
+import { Module, Organization, SubscriptionPlan, AddOn } from '../types';
+import { SUBSCRIPTION_PLANS, AVAILABLE_ADDONS } from '../constants';
+
+export const Settings: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'profile' | 'billing'>('billing');
+  const [modules, setModules] = useState<Module[]>([]);
+  const [org, setOrg] = useState<Organization | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Payment Modal State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<{ type: 'plan' | 'addon', item: SubscriptionPlan | AddOn } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch('/api/v1/orgs/org-1'),
+      apiFetch('/api/v1/orgs/org-1/modules')
+    ]).then(([orgData, modulesData]) => {
+      setOrg(orgData);
+      setModules(modulesData);
+      setLoading(false);
+    });
+  }, []);
+
+  const toggleModule = async (moduleId: string, currentState: boolean) => {
+    setModules(prev => prev.map(m => m.id === moduleId ? { ...m, enabled: !currentState } : m));
+    try {
+      if (!currentState) {
+         await apiFetch(`/api/v1/orgs/org-1/modules/${moduleId}/enable`, { method: 'POST' });
+      } else {
+         await new Promise(r => setTimeout(r, 500));
+      }
+    } catch (e) {
+      setModules(prev => prev.map(m => m.id === moduleId ? { ...m, enabled: currentState } : m));
+    }
+  };
+
+  const initiatePayment = (type: 'plan' | 'addon', item: SubscriptionPlan | AddOn) => {
+    setSelectedItem({ type, item });
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async () => {
+    if (!selectedItem) return;
+    setPaymentProcessing(true);
+
+    try {
+      if (selectedItem.type === 'plan') {
+        const plan = selectedItem.item as SubscriptionPlan;
+        await apiFetch('/api/v1/subscription/upgrade', {
+          method: 'POST',
+          body: JSON.stringify({ planId: plan.id, paymentMethod, phoneNumber })
+        });
+        // Optimistic update
+        if (org) setOrg({ ...org, plan: plan.id, subscription: { ...org.subscription, planId: plan.id } });
+      } else {
+        const addon = selectedItem.item as AddOn;
+        await apiFetch('/api/v1/addons/purchase', {
+           method: 'POST',
+           body: JSON.stringify({ addonId: addon.id, paymentMethod, phoneNumber })
+        });
+        // Optimistic update
+        if (org) setOrg({ ...org, unlockedFeatures: [...org.unlockedFeatures, addon.id] });
+      }
+      
+      setShowPaymentModal(false);
+      setSelectedItem(null);
+      alert("Payment Successful! Feature unlocked.");
+    } catch (error) {
+      alert("Payment failed. Please try again.");
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  if (loading) return <div className="text-center py-20 text-slate-400">Loading settings...</div>;
+
+  return (
+    <div className="space-y-8 max-w-6xl mx-auto">
+      
+      {/* Settings Navigation */}
+      <div className="flex justify-between items-center border-b border-slate-200">
+         <div>
+            <h2 className="text-2xl font-bold text-slate-900">Settings</h2>
+            <p className="text-slate-500 mb-4">Manage your organization, billing, and modules.</p>
+         </div>
+         <nav className="flex space-x-6">
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className={`pb-4 font-medium text-sm ${activeTab === 'profile' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              Profile & Modules
+            </button>
+            <button 
+              onClick={() => setActiveTab('billing')}
+              className={`pb-4 font-medium text-sm ${activeTab === 'billing' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              Billing & Plans
+            </button>
+         </nav>
+      </div>
+
+      {activeTab === 'profile' ? (
+        <>
+        {/* Organization Profile */}
+        <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-lg font-bold text-slate-900">Organization Profile</h3>
+            <button className="text-indigo-600 text-sm font-medium hover:underline">Edit Details</button>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-500 mb-1">Company Name</label>
+              <p className="text-slate-900 font-medium">{org?.name}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-500 mb-1">Plan</label>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 uppercase tracking-wide">
+                {org?.plan}
+              </span>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-500 mb-1">Currency</label>
+              <p className="text-slate-900">{org?.currency}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-500 mb-1">Timezone</label>
+              <p className="text-slate-900">{org?.timezone}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Module Marketplace */}
+        <section>
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-slate-900">WorkCore Modules</h3>
+            <p className="text-sm text-slate-500">Enable or disable microservices for your organization.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {modules.map(mod => (
+              <div key={mod.id} className={`flex flex-col rounded-xl border p-6 transition-all ${
+                mod.enabled ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-75 grayscale-[0.5]'
+              }`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`p-2 rounded-lg ${mod.enabled ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-200 text-slate-500'}`}>
+                    {/* Icon based on module ID */}
+                    {mod.id.includes('sales') && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                    {mod.id.includes('inventory') && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>}
+                    {mod.id.includes('finance') && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                    {mod.id.includes('hr') && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
+                    {mod.id.includes('ops') && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>}
+                    {mod.id.includes('comms') && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>}
+                  </div>
+                  <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                      <button 
+                        onClick={() => toggleModule(mod.id, mod.enabled)}
+                        className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${mod.enabled ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                      >
+                        <span className={`block h-6 w-6 rounded-full bg-white shadow transform transition-transform ${mod.enabled ? 'translate-x-4' : 'translate-x-0'}`}></span>
+                      </button>
+                  </div>
+                </div>
+                <h4 className="font-bold text-slate-900">{mod.name}</h4>
+                <p className="text-xs text-slate-500 mt-1 mb-4 h-8">{mod.description}</p>
+                
+                <div className="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center">
+                  <span className="text-sm font-semibold text-slate-900">${mod.price}/mo</span>
+                  <span className={`text-xs px-2 py-1 rounded ${mod.enabled ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                    {mod.enabled ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+        </>
+      ) : (
+        <>
+          {/* Usage Stats (Free Tier Logic) */}
+          <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8">
+             <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Current Usage</h3>
+                  <p className="text-sm text-slate-500">Plan: <span className="font-bold uppercase text-indigo-600">{org?.plan}</span></p>
+                </div>
+                {org?.plan === 'free' && (
+                  <div className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-medium">
+                     Upgrade to unlock unlimited access
+                  </div>
+                )}
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Contacts Usage */}
+                <div>
+                   <div className="flex justify-between text-sm mb-1">
+                      <span className="text-slate-600">Contacts</span>
+                      <span className="font-medium">{org?.limits.contacts.current} / {org?.limits.contacts.max === -1 ? '∞' : org?.limits.contacts.max}</span>
+                   </div>
+                   <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${org?.limits.contacts.current! >= org?.limits.contacts.max! ? 'bg-red-500' : 'bg-indigo-600'}`} 
+                        style={{ width: org?.limits.contacts.max === -1 ? '5%' : `${(org?.limits.contacts.current! / org?.limits.contacts.max!) * 100}%` }}
+                      ></div>
+                   </div>
+                </div>
+                
+                {/* Invoices Usage */}
+                <div>
+                   <div className="flex justify-between text-sm mb-1">
+                      <span className="text-slate-600">Monthly Invoices</span>
+                      <span className="font-medium">{org?.limits.invoices.current} / {org?.limits.invoices.max === -1 ? '∞' : org?.limits.invoices.max}</span>
+                   </div>
+                   <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${org?.limits.invoices.current! >= org?.limits.invoices.max! ? 'bg-red-500' : 'bg-blue-600'}`} 
+                        style={{ width: org?.limits.invoices.max === -1 ? '5%' : `${(org?.limits.invoices.current! / org?.limits.invoices.max!) * 100}%` }}
+                      ></div>
+                   </div>
+                </div>
+
+                {/* Storage Usage */}
+                <div>
+                   <div className="flex justify-between text-sm mb-1">
+                      <span className="text-slate-600">Storage (MB)</span>
+                      <span className="font-medium">{org?.limits.storage.current} / {org?.limits.storage.max}</span>
+                   </div>
+                   <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div 
+                        className="bg-slate-500 h-2 rounded-full" 
+                        style={{ width: `${(org?.limits.storage.current! / org?.limits.storage.max!) * 100}%` }}
+                      ></div>
+                   </div>
+                </div>
+             </div>
+          </section>
+
+          {/* Subscription Plans */}
+          <section className="mb-12">
+            <h3 className="text-lg font-bold text-slate-900 mb-6">Subscription Plans</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+               {SUBSCRIPTION_PLANS.map(plan => (
+                  <div key={plan.id} className={`bg-white rounded-xl p-6 border flex flex-col ${plan.recommended ? 'border-indigo-500 shadow-md ring-1 ring-indigo-500 relative' : 'border-slate-200'}`}>
+                     {plan.recommended && <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">Most Popular</span>}
+                     <h4 className="font-bold text-slate-900 text-lg">{plan.name}</h4>
+                     <div className="my-4">
+                        <span className="text-3xl font-bold text-slate-900">{plan.price === 0 ? 'Free' : plan.price.toLocaleString()}</span>
+                        {plan.price > 0 && <span className="text-slate-500 text-sm ml-1">{plan.currency} / {plan.period}</span>}
+                     </div>
+                     <ul className="space-y-3 mb-6 flex-1">
+                        {plan.features.map((feat, i) => (
+                          <li key={i} className="flex items-start text-sm text-slate-600">
+                             <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                             {feat}
+                          </li>
+                        ))}
+                     </ul>
+                     <button 
+                       onClick={() => plan.price > 0 && initiatePayment('plan', plan)}
+                       disabled={org?.plan === plan.id}
+                       className={`w-full py-2 rounded-lg text-sm font-bold transition-colors ${org?.plan === plan.id ? 'bg-slate-100 text-slate-400 cursor-default' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                     >
+                       {org?.plan === plan.id ? 'Current Plan' : plan.price === 0 ? 'Downgrade' : 'Upgrade'}
+                     </button>
+                  </div>
+               ))}
+            </div>
+          </section>
+
+          {/* Add-ons Store */}
+          <section>
+             <h3 className="text-lg font-bold text-slate-900 mb-6">One-Time Purchases (Add-ons)</h3>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {AVAILABLE_ADDONS.map(addon => {
+                   const isPurchased = org?.unlockedFeatures.includes(addon.id);
+                   return (
+                    <div key={addon.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                       <h4 className="font-bold text-slate-900">{addon.name}</h4>
+                       <p className="text-sm text-slate-500 mt-1 mb-4 flex-1">{addon.description}</p>
+                       <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                          <span className="font-bold text-slate-900">{addon.price.toLocaleString()} {addon.currency}</span>
+                          {isPurchased ? (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium flex items-center">
+                               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                               Purchased
+                            </span>
+                          ) : (
+                            <button 
+                              onClick={() => initiatePayment('addon', addon)}
+                              className="text-xs bg-white border border-indigo-600 text-indigo-600 px-3 py-1.5 rounded font-medium hover:bg-indigo-50"
+                            >
+                               Buy Now
+                            </button>
+                          )}
+                       </div>
+                    </div>
+                   );
+                })}
+             </div>
+          </section>
+        </>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-fade-in">
+              <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                 <h3 className="font-bold text-slate-900">Confirm Purchase</h3>
+                 <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                 </button>
+              </div>
+              
+              <div className="p-6">
+                 <div className="flex justify-between items-center mb-6">
+                    <div>
+                       <p className="text-sm text-slate-500">{selectedItem.type === 'plan' ? 'Subscription' : 'One-time Addon'}</p>
+                       <h4 className="text-xl font-bold text-slate-900">{selectedItem.item.name}</h4>
+                    </div>
+                    <div className="text-right">
+                       <span className="block text-xl font-bold text-indigo-600">{selectedItem.item.price.toLocaleString()}</span>
+                       <span className="text-xs text-slate-500 uppercase">{selectedItem.item.currency}</span>
+                    </div>
+                 </div>
+
+                 {/* Payment Method Selector */}
+                 <div className="space-y-3 mb-6">
+                    <label className="block text-sm font-medium text-slate-700">Select Payment Method</label>
+                    <div className="grid grid-cols-2 gap-3">
+                       <button 
+                         onClick={() => setPaymentMethod('mpesa')}
+                         className={`p-3 rounded-lg border flex flex-col items-center justify-center ${paymentMethod === 'mpesa' ? 'border-green-500 bg-green-50 text-green-700 ring-1 ring-green-500' : 'border-slate-200 hover:bg-slate-50'}`}
+                       >
+                          <span className="font-bold">M-PESA</span>
+                          <span className="text-[10px] text-slate-500">Instant Mobile Money</span>
+                       </button>
+                       <button 
+                         onClick={() => setPaymentMethod('card')}
+                         className={`p-3 rounded-lg border flex flex-col items-center justify-center ${paymentMethod === 'card' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:bg-slate-50'}`}
+                       >
+                          <span className="font-bold">Card</span>
+                          <span className="text-[10px] text-slate-500">Visa / Mastercard</span>
+                       </button>
+                    </div>
+                 </div>
+
+                 {/* Payment Details Form */}
+                 {paymentMethod === 'mpesa' ? (
+                    <div className="mb-6">
+                       <label className="block text-sm font-medium text-slate-700 mb-1">M-Pesa Phone Number</label>
+                       <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-slate-500 text-sm">🇰🇪 +254</span>
+                          <input 
+                            type="tel" 
+                            placeholder="712 345 678" 
+                            className="w-full pl-16 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                            value={phoneNumber}
+                            onChange={e => setPhoneNumber(e.target.value)}
+                          />
+                       </div>
+                       <p className="text-xs text-slate-500 mt-2">You will receive an STK push on your phone to complete the payment.</p>
+                    </div>
+                 ) : (
+                    <div className="mb-6 space-y-3">
+                       <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Card Number</label>
+                          <input type="text" placeholder="0000 0000 0000 0000" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                       </div>
+                       <div className="grid grid-cols-2 gap-3">
+                          <div>
+                             <label className="block text-sm font-medium text-slate-700 mb-1">Expiry</label>
+                             <input type="text" placeholder="MM/YY" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                          </div>
+                          <div>
+                             <label className="block text-sm font-medium text-slate-700 mb-1">CVC</label>
+                             <input type="text" placeholder="123" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                          </div>
+                       </div>
+                    </div>
+                 )}
+
+                 <button 
+                   onClick={handlePaymentSubmit}
+                   disabled={paymentProcessing}
+                   className={`w-full py-3 rounded-lg font-bold text-white shadow-lg transition-all ${
+                      paymentProcessing ? 'bg-slate-400 cursor-wait' : 
+                      paymentMethod === 'mpesa' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                   }`}
+                 >
+                    {paymentProcessing ? 'Processing...' : `Pay ${selectedItem.item.price.toLocaleString()} ${selectedItem.item.currency}`}
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+    </div>
+  );
+};
