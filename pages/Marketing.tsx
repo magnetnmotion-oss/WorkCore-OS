@@ -101,7 +101,7 @@ export const Marketing: React.FC = () => {
                   </div>
                   <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
                      <p className="text-sm font-medium text-slate-500">Revenue Generated</p>
-                     <h3 className="text-2xl font-bold text-green-600 mt-1">${campaigns.reduce((acc, c) => acc + c.revenueGenerated, 0).toLocaleString()}</h3>
+                     <h3 className="text-2xl font-bold text-green-600 mt-1">KES {campaigns.reduce((acc, c) => acc + c.revenueGenerated, 0).toLocaleString()}</h3>
                   </div>
                </div>
 
@@ -136,7 +136,7 @@ export const Marketing: React.FC = () => {
                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
                            <XAxis dataKey="name" hide />
                            <YAxis />
-                           <Tooltip formatter={(val: number) => `$${val.toLocaleString()}`} />
+                           <Tooltip formatter={(val: number) => `KES ${val.toLocaleString()}`} />
                            <Area type="monotone" dataKey="revenue" stroke="#10B981" fillOpacity={1} fill="url(#colorRev)" />
                         </AreaChart>
                      </ResponsiveContainer>
@@ -182,7 +182,7 @@ export const Marketing: React.FC = () => {
                            </td>
                            <td className="px-6 py-4 text-right text-sm text-slate-500">{camp.sentCount.toLocaleString()}</td>
                            <td className="px-6 py-4 text-right text-sm font-medium text-indigo-600">{camp.clickCount.toLocaleString()}</td>
-                           <td className="px-6 py-4 text-right text-sm font-bold text-green-600">${camp.revenueGenerated.toLocaleString()}</td>
+                           <td className="px-6 py-4 text-right text-sm font-bold text-green-600">KES {camp.revenueGenerated.toLocaleString()}</td>
                         </tr>
                      ))}
                   </tbody>
@@ -306,7 +306,7 @@ export const Marketing: React.FC = () => {
                  </div>
                  <div className="bg-yellow-50 p-4 rounded-xl text-center">
                     <span className="block text-yellow-600 text-xs font-bold uppercase mb-1">Revenue</span>
-                    <span className="text-2xl font-bold text-yellow-700">${selectedCampaign.revenueGenerated.toLocaleString()}</span>
+                    <span className="text-2xl font-bold text-yellow-700">KES {selectedCampaign.revenueGenerated.toLocaleString()}</span>
                  </div>
               </div>
 

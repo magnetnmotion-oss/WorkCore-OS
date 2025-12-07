@@ -14,7 +14,6 @@ export const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoiceId, onBack 
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
-    // In a real app, we would fetch by ID, but we'll fetch all and find it from mock
     Promise.all([
       apiFetch('/api/v1/invoices'),
       apiFetch('/api/v1/orgs/org-1')
@@ -28,7 +27,6 @@ export const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoiceId, onBack 
 
   const handleMpesaPayment = async () => {
     setPaying(true);
-    // Simulate API call
     await new Promise(r => setTimeout(r, 2000));
     alert(`STK Push sent to client for Invoice ${invoice?.invoiceNumber}`);
     setPaying(false);
@@ -44,16 +42,13 @@ export const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoiceId, onBack 
         <span>Back to Invoices</span>
       </button>
 
-      {/* Invoice Paper */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-8 md:p-12 relative overflow-hidden">
-        {/* Status Badge */}
         <div className={`absolute top-0 right-0 px-6 py-2 text-sm font-bold uppercase rounded-bl-xl ${
           invoice.status === 'paid' ? 'bg-green-500 text-white' : invoice.status === 'overdue' ? 'bg-red-500 text-white' : 'bg-yellow-400 text-yellow-900'
         }`}>
           {invoice.status}
         </div>
 
-        {/* Header */}
         <div className="flex justify-between items-start mb-12">
            <div>
               <h1 className="text-3xl font-bold text-slate-900 mb-2">INVOICE</h1>
@@ -62,11 +57,10 @@ export const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoiceId, onBack 
            <div className="text-right">
               <h3 className="font-bold text-slate-900 text-lg">{org?.name}</h3>
               <p className="text-sm text-slate-500">Nairobi, Kenya</p>
-              <p className="text-sm text-slate-500">contact@workcore.os</p>
+              <p className="text-sm text-slate-500">contact@nairobilogistics.co.ke</p>
            </div>
         </div>
 
-        {/* Client & Dates */}
         <div className="flex justify-between items-start mb-12">
            <div>
               <p className="text-xs uppercase font-bold text-slate-400 mb-1">Bill To</p>
@@ -85,7 +79,6 @@ export const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoiceId, onBack 
            </div>
         </div>
 
-        {/* Line Items */}
         <table className="w-full mb-12">
            <thead>
               <tr className="border-b-2 border-slate-100">
@@ -100,32 +93,30 @@ export const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoiceId, onBack 
                 <tr key={idx}>
                    <td className="py-4 text-slate-900 font-medium">{item.description}</td>
                    <td className="py-4 text-center text-slate-500">{item.quantity}</td>
-                   <td className="py-4 text-right text-slate-500">${item.unitPrice.toLocaleString()}</td>
-                   <td className="py-4 text-right text-slate-900 font-bold">${item.total.toLocaleString()}</td>
+                   <td className="py-4 text-right text-slate-500">KES {item.unitPrice.toLocaleString()}</td>
+                   <td className="py-4 text-right text-slate-900 font-bold">KES {item.total.toLocaleString()}</td>
                 </tr>
               ))}
            </tbody>
         </table>
 
-        {/* Totals */}
         <div className="flex justify-end border-t border-slate-100 pt-6">
            <div className="w-64 space-y-3">
               <div className="flex justify-between text-sm">
                  <span className="text-slate-500">Subtotal</span>
-                 <span className="font-medium text-slate-900">${invoice.total.toLocaleString()}</span>
+                 <span className="font-medium text-slate-900">KES {invoice.total.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                  <span className="text-slate-500">Tax (16%)</span>
-                 <span className="font-medium text-slate-900">${(invoice.total * 0.16).toLocaleString()}</span>
+                 <span className="font-medium text-slate-900">KES {(invoice.total * 0.16).toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-lg font-bold border-t border-slate-200 pt-3 text-indigo-600">
                  <span>Total Due</span>
-                 <span>${(invoice.total * 1.16).toLocaleString()}</span>
+                 <span>KES {(invoice.total * 1.16).toLocaleString()}</span>
               </div>
            </div>
         </div>
 
-        {/* Actions Footer */}
         <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center print:hidden">
            <div className="flex space-x-3">
               <button className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50" onClick={() => window.print()}>

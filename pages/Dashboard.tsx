@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StatCard } from '../components/StatCard';
 import { apiFetch } from '../lib/api';
-import { MOCK_METRICS } from '../constants'; // Fallback type structure
+import { MOCK_METRICS } from '../constants'; 
 import { generateBusinessInsights } from '../services/geminiService';
 import { Insight, BusinessMetrics, Invoice, Item, Task, Message, ViewState } from '../types';
 
@@ -14,7 +14,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [metrics, setMetrics] = useState<BusinessMetrics>(MOCK_METRICS);
   
-  // Snippet Data States
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [lowStockItems, setLowStockItems] = useState<Item[]>([]);
   const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
@@ -43,7 +42,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
         setMetrics(m as BusinessMetrics);
         
-        // Populate snippets
         const allInvoices = inv as Invoice[];
         setRecentInvoices(allInvoices.slice(0, 5));
 
@@ -51,7 +49,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         setLowStockItems(allItems.filter(i => i.stockLevel <= i.reOrderLevel).slice(0, 5));
 
         const allTasks = tasks as Task[];
-        // Sort by priority (high first) then filter not done
         setPendingTasks(
           allTasks
             .filter(t => t.status !== 'done')
@@ -62,7 +59,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         const allMsgs = msgs as Message[];
         setRecentMessages(allMsgs.slice(0, 5));
 
-        // Generate insights based on fetched metrics
         fetchInsights(m as BusinessMetrics);
       } catch (error) {
         console.error("Failed to load dashboard data", error);
@@ -107,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Total Revenue" 
-          value={`$${metrics.totalRevenue.toLocaleString()}`} 
+          value={`KES ${metrics.totalRevenue.toLocaleString()}`} 
           trend="12.5%" 
           trendUp={true}
           icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
@@ -138,7 +134,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         
         {/* Revenue Chart */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Revenue Analytics</h3>
+          <h3 className="text-lg font-bold text-slate-900 mb-6">Revenue Analytics (KES)</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={metrics.revenueTrend}>
@@ -150,10 +146,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} tickFormatter={(value) => `$${value/1000}k`} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
                 <Tooltip 
                   contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} 
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  formatter={(value: number) => [`KES ${value.toLocaleString()}`, 'Revenue']}
                 />
                 <Area type="monotone" dataKey="amount" stroke="#4F46E5" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
@@ -237,7 +233,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                        >
                           <td className="py-2.5 font-medium text-slate-900">{inv.invoiceNumber}</td>
                           <td className="py-2.5 text-slate-500">{inv.clientName}</td>
-                          <td className="py-2.5 text-right font-medium text-slate-900">${inv.total.toLocaleString()}</td>
+                          <td className="py-2.5 text-right font-medium text-slate-900">KES {inv.total.toLocaleString()}</td>
                        </tr>
                     ))}
                     {recentInvoices.length === 0 && (

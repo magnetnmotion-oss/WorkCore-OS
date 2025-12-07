@@ -1,25 +1,29 @@
 import { MOCK_INVOICES, MOCK_PAYMENTS, MOCK_EXPENSES, MOCK_EMPLOYEES, MOCK_MESSAGES, MOCK_METRICS, MOCK_PROJECTS, MOCK_TASKS, MOCK_LEADS, MOCK_QUOTATIONS, MOCK_ITEMS, MOCK_WAREHOUSES, MOCK_TICKETS, MOCK_MODULES, MOCK_ORG, MOCK_CONTACTS, MOCK_COMMUNICATION_HISTORY, MOCK_EMAIL_ACCOUNTS, MOCK_USERS_LIST, MOCK_CAMPAIGNS, MOCK_TEMPLATES, MOCK_NOTIFICATIONS } from '../constants';
-import { CommunicationMessage, EmailAccount, User, MarketingCampaign, MarketingTemplate, Notification, Employee } from '../types';
+import { CommunicationMessage, EmailAccount, User, MarketingCampaign, MarketingTemplate, Notification, Employee, Item, Invoice, Project, Expense } from '../types';
 
 let currentOrg = { ...MOCK_ORG };
 let currentUsers = [...MOCK_USERS_LIST];
-let currentEmployees = [...MOCK_EMPLOYEES]; // Mutable employees list
+let currentEmployees = [...MOCK_EMPLOYEES]; 
+let currentItems = [...MOCK_ITEMS];
+let currentInvoices = [...MOCK_INVOICES];
+let currentProjects = [...MOCK_PROJECTS];
+let currentExpenses = [...MOCK_EXPENSES];
 let currentCampaigns = [...MOCK_CAMPAIGNS];
 let currentNotifications = [...MOCK_NOTIFICATIONS];
 
 const MOCK_DB: Record<string, any> = {
   '/api/v1/leads': MOCK_LEADS,
   '/api/v1/quotations': MOCK_QUOTATIONS,
-  '/api/v1/invoices': MOCK_INVOICES,
+  '/api/v1/invoices': currentInvoices,
   '/api/v1/payments': MOCK_PAYMENTS,
-  '/api/v1/expenses': MOCK_EXPENSES,
-  '/api/v1/items': MOCK_ITEMS,
+  '/api/v1/expenses': currentExpenses,
+  '/api/v1/items': currentItems,
   '/api/v1/warehouses': MOCK_WAREHOUSES,
-  '/api/v1/employees': currentEmployees, // Reference mutable list
+  '/api/v1/employees': currentEmployees,
   '/api/v1/messages': MOCK_MESSAGES, 
   '/api/v1/tickets': MOCK_TICKETS,
   '/api/v1/metrics': MOCK_METRICS,
-  '/api/v1/projects': MOCK_PROJECTS,
+  '/api/v1/projects': currentProjects,
   '/api/v1/tasks': MOCK_TASKS,
   '/api/v1/auth/login': { accessToken: 'mock-access-token', refreshToken: 'mock-refresh-token', user: { id: 'u-123', name: 'Alex Founder' } },
   '/api/v1/orgs/org-1': currentOrg, 
@@ -52,6 +56,74 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
 
   // 3. Strip query parameters for mock DB lookup (simplistic routing)
   const cleanPath = path.split('?')[0];
+
+  // --- MOCK LOGIC FOR INVENTORY ITEMS ---
+  if (path === '/api/v1/items' && options.method === 'POST') {
+    const body = JSON.parse(options.body as string);
+    const newItem: Item = {
+        id: `i-${Date.now()}`,
+        sku: body.sku || `SKU-${Math.floor(Math.random() * 1000)}`,
+        name: body.name,
+        description: body.description || '',
+        costPrice: Number(body.costPrice),
+        sellPrice: Number(body.sellPrice),
+        stockLevel: Number(body.stockLevel),
+        reOrderLevel: Number(body.reOrderLevel || 10)
+    };
+    currentItems.push(newItem);
+    MOCK_DB['/api/v1/items'] = currentItems;
+    return newItem;
+  }
+
+  // --- MOCK LOGIC FOR INVOICES ---
+  if (path === '/api/v1/invoices' && options.method === 'POST') {
+    const body = JSON.parse(options.body as string);
+    const newInvoice: Invoice = {
+        id: `inv-${Date.now()}`,
+        invoiceNumber: `INV-2024-${Math.floor(Math.random() * 1000)}`,
+        clientId: 'c-new',
+        clientName: body.clientName,
+        items: body.items,
+        total: body.items.reduce((acc: number, item: any) => acc + item.total, 0),
+        status: 'pending',
+        dueDate: body.dueDate
+    };
+    currentInvoices.unshift(newInvoice);
+    MOCK_DB['/api/v1/invoices'] = currentInvoices;
+    return newInvoice;
+  }
+
+  // --- MOCK LOGIC FOR PROJECTS ---
+  if (path === '/api/v1/projects' && options.method === 'POST') {
+    const body = JSON.parse(options.body as string);
+    const newProject: Project = {
+        id: `p-${Date.now()}`,
+        name: body.name,
+        manager: body.manager,
+        status: 'active',
+        budget: Number(body.budget),
+        dueDate: body.dueDate,
+        description: body.description
+    };
+    currentProjects.unshift(newProject);
+    MOCK_DB['/api/v1/projects'] = currentProjects;
+    return newProject;
+  }
+
+  // --- MOCK LOGIC FOR EXPENSES ---
+  if (path === '/api/v1/expenses' && options.method === 'POST') {
+    const body = JSON.parse(options.body as string);
+    const newExpense: Expense = {
+        id: `exp-${Date.now()}`,
+        category: body.category,
+        amount: Number(body.amount),
+        description: body.description,
+        date: new Date().toISOString().split('T')[0]
+    };
+    currentExpenses.unshift(newExpense);
+    MOCK_DB['/api/v1/expenses'] = currentExpenses;
+    return newExpense;
+  }
 
   // --- MOCK LOGIC FOR EMPLOYEES ---
   if (path === '/api/v1/employees' && options.method === 'POST') {
@@ -146,11 +218,8 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   }
 
   // --- SPECIAL MOCK LOGIC FOR PAYMENTS & SUBSCRIPTIONS ---
-  
-  // Subscription Upgrade
   if (path === '/api/v1/subscription/upgrade' && options.method === 'POST') {
      const body = JSON.parse(options.body as string);
-     // Simulate success
      return { 
        success: true, 
        message: `Upgraded to ${body.planId} successfully using ${body.paymentMethod}`,
@@ -158,7 +227,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
      };
   }
 
-  // Add-on Purchase
   if (path === '/api/v1/addons/purchase' && options.method === 'POST') {
      const body = JSON.parse(options.body as string);
      return {
@@ -169,8 +237,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   }
 
   // --- SPECIAL MOCK LOGIC FOR WHATSAPP/EMAIL ---
-
-  // Mock SENDING a WhatsApp Message
   if (path === '/api/v1/whatsapp/send' && options.method === 'POST') {
     const body = JSON.parse(options.body as string);
     const newMessage: CommunicationMessage = {
@@ -186,7 +252,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     return newMessage;
   }
   
-  // Mock SENDING an Email
   if (path === '/api/v1/email/send' && options.method === 'POST') {
     const body = JSON.parse(options.body as string);
     const newMessage: CommunicationMessage = {
@@ -203,7 +268,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     return newMessage;
   }
 
-  // Mock Connecting an Email Account (OAuth)
   if (path === '/api/v1/email/connect' && options.method === 'POST') {
      const body = JSON.parse(options.body as string);
      const newAccount: EmailAccount = {
@@ -216,7 +280,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
      return newAccount;
   }
 
-  // Mock RECEIVING a Webhook (for simulation button)
   if (path === '/api/v1/whatsapp/webhook' && options.method === 'POST') {
      const body = JSON.parse(options.body as string);
      const incomingMsg: CommunicationMessage = {
@@ -232,17 +295,14 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
      return incomingMsg;
   }
 
-  // Mock Module Toggling
   if (options.method === 'POST' && path.includes('/enable')) {
     return { success: true };
   }
 
-  // 4. Mock routing logic
   if (MOCK_DB[cleanPath]) {
     return MOCK_DB[cleanPath];
   }
 
-  // Default fallback
   console.warn(`[API] 404 Not Found: ${path}`);
   return {};
 }

@@ -13,6 +13,16 @@ export const Operations: React.FC<OperationsProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  // New Project Modal State
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [newProject, setNewProject] = useState({
+    name: '',
+    manager: '',
+    budget: '',
+    dueDate: '',
+    description: ''
+  });
+
   useEffect(() => {
     Promise.all([
       apiFetch('/api/v1/projects'),
@@ -23,6 +33,22 @@ export const Operations: React.FC<OperationsProps> = ({ onNavigate }) => {
       setLoading(false);
     });
   }, []);
+
+  const handleCreateProject = async () => {
+    if (!newProject.name || !newProject.manager) return;
+    try {
+      const created = await apiFetch('/api/v1/projects', {
+        method: 'POST',
+        body: JSON.stringify(newProject)
+      });
+      setProjects(prev => [created, ...prev]);
+      setShowProjectModal(false);
+      setNewProject({ name: '', manager: '', budget: '', dueDate: '', description: '' });
+      alert("Project created successfully!");
+    } catch (e) {
+      alert("Failed to create project");
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -39,7 +65,10 @@ export const Operations: React.FC<OperationsProps> = ({ onNavigate }) => {
              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
              Export Projects
            </button>
-           <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+           <button 
+             onClick={() => setShowProjectModal(true)}
+             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+           >
              + New Project
            </button>
         </div>
@@ -73,7 +102,7 @@ export const Operations: React.FC<OperationsProps> = ({ onNavigate }) => {
                   <p className="text-sm text-slate-500">Due: {proj.dueDate}</p>
                 </div>
                 <div className="mt-4 pt-4 border-t border-slate-50 flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-900">${proj.budget.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-slate-900">KES {proj.budget.toLocaleString()}</span>
                   <span className="text-indigo-600 text-sm font-medium">View Details &rarr;</span>
                 </div>
               </div>
@@ -150,6 +179,67 @@ export const Operations: React.FC<OperationsProps> = ({ onNavigate }) => {
           </table>
         </div>
       </section>
+
+      {/* Create Project Modal */}
+      {showProjectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl animate-fade-in">
+              <h3 className="text-xl font-bold text-slate-900 mb-6">Start New Project</h3>
+              <div className="space-y-4">
+                 <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
+                    <input 
+                      type="text" 
+                      value={newProject.name} 
+                      onChange={e => setNewProject({...newProject, name: e.target.value})} 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                    />
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Manager</label>
+                        <input 
+                          type="text" 
+                          value={newProject.manager} 
+                          onChange={e => setNewProject({...newProject, manager: e.target.value})} 
+                          className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Budget (KES)</label>
+                        <input 
+                          type="number" 
+                          value={newProject.budget} 
+                          onChange={e => setNewProject({...newProject, budget: e.target.value})} 
+                          className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                        />
+                    </div>
+                 </div>
+                 <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Deadline</label>
+                    <input 
+                      type="date" 
+                      value={newProject.dueDate} 
+                      onChange={e => setNewProject({...newProject, dueDate: e.target.value})} 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                    />
+                 </div>
+                 <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <textarea 
+                      value={newProject.description} 
+                      onChange={e => setNewProject({...newProject, description: e.target.value})} 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none" 
+                    />
+                 </div>
+              </div>
+              <div className="mt-8 flex justify-end space-x-3">
+                 <button onClick={() => setShowProjectModal(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancel</button>
+                 <button onClick={handleCreateProject} className="px-6 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg">Create Project</button>
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* Task Detail Modal */}
       {selectedTask && (

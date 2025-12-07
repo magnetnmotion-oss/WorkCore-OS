@@ -13,7 +13,6 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employeeId, onBa
   useEffect(() => {
     apiFetch('/api/v1/employees').then((list: Employee[]) => {
       const found = list.find(e => e.id === employeeId);
-      // Mock extra data that isn't in list view
       if (found) {
           found.salary = found.salary || 45000; 
           found.joinDate = found.joinDate || '2023-01-15';
@@ -69,7 +68,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employeeId, onBa
                     </div>
                     <div>
                        <p className="text-slate-500">Salary</p>
-                       <p className="font-medium">${employee.salary?.toLocaleString()}/mo</p>
+                       <p className="font-medium">KES {employee.salary?.toLocaleString()}/mo</p>
                     </div>
                  </div>
               </div>

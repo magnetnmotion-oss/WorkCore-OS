@@ -13,6 +13,14 @@ export const Finance: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
 
+  // Add Expense Modal
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    category: 'General',
+    amount: '',
+    description: ''
+  });
+
   useEffect(() => {
     Promise.all([
       apiFetch('/api/v1/payments'),
@@ -32,6 +40,22 @@ export const Finance: React.FC = () => {
     }
   };
 
+  const handleAddExpense = async () => {
+    if (!newExpense.amount || !newExpense.description) return;
+    try {
+      const created = await apiFetch('/api/v1/expenses', {
+        method: 'POST',
+        body: JSON.stringify(newExpense)
+      });
+      setExpenses(prev => [created, ...prev]);
+      setShowExpenseModal(false);
+      setNewExpense({ category: 'General', amount: '', description: '' });
+      alert("Expense recorded.");
+    } catch (e) {
+      alert("Failed to record expense");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -47,7 +71,10 @@ export const Finance: React.FC = () => {
             <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             Export CSV
           </button>
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <button 
+            onClick={() => setShowExpenseModal(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
             + Record Expense
           </button>
         </div>
@@ -94,7 +121,7 @@ export const Finance: React.FC = () => {
                   <td className="px-6 py-4 text-sm text-slate-900 font-mono">{p.id}</td>
                   <td className="px-6 py-4 text-sm text-slate-500 capitalize">{p.provider}</td>
                   <td className="px-6 py-4 text-sm text-slate-500">{p.date}</td>
-                  <td className="px-6 py-4 text-sm text-right font-medium text-slate-900">${p.amount.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-right font-medium text-slate-900">KES {p.amount.toLocaleString()}</td>
                   <td className="px-6 py-4 text-center">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {p.status}
@@ -126,11 +153,57 @@ export const Finance: React.FC = () => {
                   <td className="px-6 py-4 text-sm text-slate-900 font-medium">{e.category}</td>
                   <td className="px-6 py-4 text-sm text-slate-500">{e.description}</td>
                   <td className="px-6 py-4 text-sm text-slate-500">{e.date}</td>
-                  <td className="px-6 py-4 text-sm text-right font-medium text-slate-900">-${e.amount.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-right font-medium text-slate-900">-KES {e.amount.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Record Expense Modal */}
+      {showExpenseModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl w-full max-w-sm p-6 shadow-2xl animate-fade-in">
+              <h3 className="text-xl font-bold text-slate-900 mb-6">Record Expense</h3>
+              <div className="space-y-4">
+                 <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Amount (KES)</label>
+                    <input 
+                      type="number" 
+                      value={newExpense.amount} 
+                      onChange={e => setNewExpense({...newExpense, amount: e.target.value})} 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                    />
+                 </div>
+                 <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                    <select 
+                      value={newExpense.category} 
+                      onChange={e => setNewExpense({...newExpense, category: e.target.value})}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none"
+                    >
+                       <option>General</option>
+                       <option>Travel</option>
+                       <option>Office</option>
+                       <option>Software</option>
+                       <option>Marketing</option>
+                    </select>
+                 </div>
+                 <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <textarea 
+                      value={newExpense.description} 
+                      onChange={e => setNewExpense({...newExpense, description: e.target.value})} 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none" 
+                    />
+                 </div>
+              </div>
+              <div className="mt-8 flex justify-end space-x-3">
+                 <button onClick={() => setShowExpenseModal(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancel</button>
+                 <button onClick={handleAddExpense} className="px-6 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg">Save Record</button>
+              </div>
+           </div>
         </div>
       )}
 
@@ -149,7 +222,7 @@ export const Finance: React.FC = () => {
               <div className="space-y-4">
                  <div className="bg-slate-50 p-4 rounded-lg text-center">
                     <span className="block text-slate-500 text-xs uppercase font-bold mb-1">Amount Received</span>
-                    <span className="text-3xl font-bold text-slate-900">${selectedPayment.amount.toFixed(2)}</span>
+                    <span className="text-3xl font-bold text-slate-900">KES {selectedPayment.amount.toLocaleString()}</span>
                  </div>
                  
                  <div className="grid grid-cols-2 gap-4 text-sm">
@@ -202,7 +275,7 @@ export const Finance: React.FC = () => {
                        <p className="text-sm font-bold text-slate-500 uppercase">{selectedExpense.category}</p>
                        <h4 className="text-lg font-bold text-slate-900 mt-1">{selectedExpense.description}</h4>
                     </div>
-                    <span className="text-xl font-bold text-slate-900">${selectedExpense.amount.toFixed(2)}</span>
+                    <span className="text-xl font-bold text-slate-900">KES {selectedExpense.amount.toLocaleString()}</span>
                  </div>
                  
                  <div className="py-4 border-t border-b border-slate-100 grid grid-cols-2 gap-4 text-sm">

@@ -14,13 +14,11 @@ export const InventoryDetail: React.FC<InventoryDetailProps> = ({ itemId, onBack
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data fetch - real app would use specific endpoint
     apiFetch('/api/v1/items').then((items: Item[]) => {
        const found = items.find(i => i.id === itemId);
        setItem(found || null);
        setLoading(false);
        
-       // Mock movements data since we don't have it in types yet
        setMovements([
          { id: 'sm-1', itemId: itemId, warehouseId: 'w-1', delta: 50, reason: 'Purchase Order #PO-001', date: '2024-05-01' },
          { id: 'sm-2', itemId: itemId, warehouseId: 'w-1', delta: -10, reason: 'Sales Order #INV-001', date: '2024-05-10' },
@@ -35,7 +33,7 @@ export const InventoryDetail: React.FC<InventoryDetailProps> = ({ itemId, onBack
 
   const stockHistoryData = movements.map(m => ({
     date: m.date,
-    stock: item.stockLevel + m.delta // Simplified math for viz
+    stock: item.stockLevel + m.delta 
   }));
 
   return (
@@ -68,11 +66,11 @@ export const InventoryDetail: React.FC<InventoryDetailProps> = ({ itemId, onBack
             <div className="grid grid-cols-2 gap-8 mb-8">
                <div>
                   <p className="text-sm text-slate-500 mb-1">Cost Price</p>
-                  <p className="text-xl font-medium text-slate-900">${item.costPrice.toFixed(2)}</p>
+                  <p className="text-xl font-medium text-slate-900">KES {item.costPrice.toLocaleString()}</p>
                </div>
                <div>
                   <p className="text-sm text-slate-500 mb-1">Selling Price</p>
-                  <p className="text-xl font-medium text-slate-900">${item.sellPrice.toFixed(2)}</p>
+                  <p className="text-xl font-medium text-slate-900">KES {item.sellPrice.toLocaleString()}</p>
                </div>
                <div>
                   <p className="text-sm text-slate-500 mb-1">Reorder Level</p>
