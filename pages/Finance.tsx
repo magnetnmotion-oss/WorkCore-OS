@@ -8,6 +8,10 @@ export const Finance: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [activeTab, setActiveTab] = useState<'payments' | 'expenses'>('payments');
   const [loading, setLoading] = useState(true);
+  
+  // Detail Modal States
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -82,13 +86,17 @@ export const Finance: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {payments.map((p) => (
-                <tr key={p.id}>
+                <tr 
+                  key={p.id} 
+                  onClick={() => setSelectedPayment(p)}
+                  className="hover:bg-slate-50 cursor-pointer transition-colors"
+                >
                   <td className="px-6 py-4 text-sm text-slate-900 font-mono">{p.id}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{p.provider}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 capitalize">{p.provider}</td>
                   <td className="px-6 py-4 text-sm text-slate-500">{p.date}</td>
                   <td className="px-6 py-4 text-sm text-right font-medium text-slate-900">${p.amount.toFixed(2)}</td>
                   <td className="px-6 py-4 text-center">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {p.status}
                     </span>
                   </td>
@@ -110,7 +118,11 @@ export const Finance: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {expenses.map((e) => (
-                <tr key={e.id}>
+                <tr 
+                  key={e.id}
+                  onClick={() => setSelectedExpense(e)}
+                  className="hover:bg-slate-50 cursor-pointer transition-colors"
+                >
                   <td className="px-6 py-4 text-sm text-slate-900 font-medium">{e.category}</td>
                   <td className="px-6 py-4 text-sm text-slate-500">{e.description}</td>
                   <td className="px-6 py-4 text-sm text-slate-500">{e.date}</td>
@@ -119,6 +131,104 @@ export const Finance: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Payment Detail Modal */}
+      {selectedPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl animate-fade-in relative">
+              <button 
+                onClick={() => setSelectedPayment(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <h3 className="text-xl font-bold text-slate-900 mb-6">Payment Details</h3>
+              
+              <div className="space-y-4">
+                 <div className="bg-slate-50 p-4 rounded-lg text-center">
+                    <span className="block text-slate-500 text-xs uppercase font-bold mb-1">Amount Received</span>
+                    <span className="text-3xl font-bold text-slate-900">${selectedPayment.amount.toFixed(2)}</span>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                       <p className="text-slate-500 mb-1">Transaction ID</p>
+                       <p className="font-mono text-slate-900 font-medium">{selectedPayment.id}</p>
+                    </div>
+                    <div>
+                       <p className="text-slate-500 mb-1">Date</p>
+                       <p className="text-slate-900 font-medium">{selectedPayment.date}</p>
+                    </div>
+                    <div>
+                       <p className="text-slate-500 mb-1">Provider</p>
+                       <p className="text-slate-900 font-medium capitalize">{selectedPayment.provider}</p>
+                    </div>
+                    <div>
+                       <p className="text-slate-500 mb-1">Linked Invoice</p>
+                       <p className="text-indigo-600 font-medium cursor-pointer hover:underline">{selectedPayment.invoiceId}</p>
+                    </div>
+                 </div>
+
+                 <div className="border-t border-slate-100 pt-4 mt-2">
+                    <div className="flex justify-between items-center">
+                       <span className="text-sm text-slate-500">Status</span>
+                       <span className={`px-3 py-1 text-sm font-bold rounded-full ${selectedPayment.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {selectedPayment.status.toUpperCase()}
+                       </span>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Expense Detail Modal */}
+      {selectedExpense && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl animate-fade-in relative">
+              <button 
+                onClick={() => setSelectedExpense(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <h3 className="text-xl font-bold text-slate-900 mb-6">Expense Record</h3>
+              
+              <div className="space-y-4">
+                 <div className="flex justify-between items-start">
+                    <div>
+                       <p className="text-sm font-bold text-slate-500 uppercase">{selectedExpense.category}</p>
+                       <h4 className="text-lg font-bold text-slate-900 mt-1">{selectedExpense.description}</h4>
+                    </div>
+                    <span className="text-xl font-bold text-slate-900">${selectedExpense.amount.toFixed(2)}</span>
+                 </div>
+                 
+                 <div className="py-4 border-t border-b border-slate-100 grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                       <p className="text-slate-500 mb-1">Date Occurred</p>
+                       <p className="text-slate-900">{selectedExpense.date}</p>
+                    </div>
+                    <div>
+                       <p className="text-slate-500 mb-1">Expense ID</p>
+                       <p className="text-slate-900 font-mono">{selectedExpense.id}</p>
+                    </div>
+                 </div>
+
+                 <div className="text-sm">
+                    <p className="text-slate-500 mb-2">Attachments</p>
+                    <div className="flex space-x-2">
+                       <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 border border-slate-200">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                       </div>
+                       <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 border border-slate-200">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
         </div>
       )}
     </div>

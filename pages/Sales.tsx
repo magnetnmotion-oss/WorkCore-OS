@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
 import { downloadCSV } from '../lib/export';
-import { Invoice, Lead, Quotation } from '../types';
+import { Invoice, Lead, Quotation, ViewState } from '../types';
 
-export const Sales: React.FC = () => {
+interface SalesProps {
+  onNavigate?: (view: ViewState, data: any) => void;
+}
+
+export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'leads' | 'quotations' | 'invoices'>('invoices');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Detail Modal States
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(null);
+
   useEffect(() => {
-    // Fetching with orgId query param to demonstrate API design compliance
     Promise.all([
       apiFetch('/api/v1/leads?orgId=org-1'),
       apiFetch('/api/v1/quotations?orgId=org-1'),
@@ -85,8 +92,12 @@ export const Sales: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-200">
                   {invoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{inv.invoiceNumber}</td>
+                    <tr 
+                      key={inv.id} 
+                      onClick={() => onNavigate && onNavigate(ViewState.INVOICE_DETAIL, inv.id)}
+                      className="hover:bg-slate-50 cursor-pointer transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">{inv.invoiceNumber}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{inv.clientName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{inv.dueDate}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-slate-900">${inv.total.toFixed(2)}</td>
@@ -114,7 +125,11 @@ export const Sales: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-200">
                   {leads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-slate-50">
+                    <tr 
+                      key={lead.id} 
+                      onClick={() => setSelectedLead(lead)}
+                      className="hover:bg-slate-50 cursor-pointer transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{lead.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.company}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -143,7 +158,11 @@ export const Sales: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-200">
                   {quotations.map((q) => (
-                    <tr key={q.id} className="hover:bg-slate-50">
+                    <tr 
+                      key={q.id} 
+                      onClick={() => setSelectedQuotation(q)}
+                      className="hover:bg-slate-50 cursor-pointer transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{q.leadName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{q.items.length} items</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-slate-900">${q.total.toLocaleString()}</td>
@@ -159,6 +178,122 @@ export const Sales: React.FC = () => {
               </table>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Lead Detail Modal */}
+      {selectedLead && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl animate-fade-in relative">
+              <button 
+                onClick={() => setSelectedLead(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              
+              <div className="flex items-center space-x-4 mb-6">
+                 <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center text-xl font-bold text-slate-500">
+                    {selectedLead.name.charAt(0)}
+                 </div>
+                 <div>
+                    <h3 className="text-xl font-bold text-slate-900">{selectedLead.name}</h3>
+                    <p className="text-sm text-slate-500">{selectedLead.company} • {selectedLead.email}</p>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50 p-3 rounded-lg">
+                       <p className="text-xs text-slate-500 uppercase font-bold">Status</p>
+                       <p className="font-medium text-slate-900 capitalize">{selectedLead.status}</p>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-lg">
+                       <p className="text-xs text-slate-500 uppercase font-bold">Potential Value</p>
+                       <p className="font-medium text-green-700">${selectedLead.value.toLocaleString()}</p>
+                    </div>
+                 </div>
+                 
+                 <div>
+                    <h4 className="text-sm font-bold text-slate-900 mb-2">History & Notes</h4>
+                    <div className="border border-slate-200 rounded-lg p-3 text-sm text-slate-600 bg-slate-50 h-32 overflow-y-auto">
+                       <p className="mb-2"><span className="font-semibold text-slate-800">2024-06-01:</span> Lead created from {selectedLead.source}.</p>
+                       <p className="mb-2"><span className="font-semibold text-slate-800">2024-06-05:</span> Sent introductory email with brochure.</p>
+                       <p><span className="font-semibold text-slate-800">2024-06-12:</span> Scheduled follow-up call for next Tuesday.</p>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                 <button className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50">Edit</button>
+                 <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">Convert to Deal</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Quotation Detail Modal */}
+      {selectedQuotation && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl w-full max-w-2xl p-8 shadow-2xl animate-fade-in relative">
+              <button 
+                onClick={() => setSelectedQuotation(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              
+              <div className="flex justify-between items-start mb-8 border-b border-slate-100 pb-4">
+                 <div>
+                    <h3 className="text-2xl font-bold text-slate-900">Quotation</h3>
+                    <p className="text-sm text-slate-500 text-mono">Ref: {selectedQuotation.id}</p>
+                 </div>
+                 <div className="text-right">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${selectedQuotation.status === 'sent' ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-800'}`}>
+                       {selectedQuotation.status}
+                    </span>
+                    <p className="text-xs text-slate-500 mt-1">Expires: {selectedQuotation.expiresAt}</p>
+                 </div>
+              </div>
+
+              <div className="mb-6">
+                 <p className="text-xs uppercase font-bold text-slate-400 mb-1">Prepared For</p>
+                 <h4 className="text-lg font-bold text-slate-900">{selectedQuotation.leadName}</h4>
+              </div>
+
+              <table className="w-full mb-6">
+                 <thead>
+                    <tr className="border-b border-slate-200 text-xs text-slate-500 uppercase text-left">
+                       <th className="py-2">Description</th>
+                       <th className="py-2 text-center">Qty</th>
+                       <th className="py-2 text-right">Price</th>
+                       <th className="py-2 text-right">Total</th>
+                    </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-100">
+                    {selectedQuotation.items.map((item, i) => (
+                       <tr key={i} className="text-sm">
+                          <td className="py-3 text-slate-900">{item.description}</td>
+                          <td className="py-3 text-center text-slate-600">{item.quantity}</td>
+                          <td className="py-3 text-right text-slate-600">${item.unitPrice.toLocaleString()}</td>
+                          <td className="py-3 text-right font-medium text-slate-900">${item.total.toLocaleString()}</td>
+                       </tr>
+                    ))}
+                 </tbody>
+              </table>
+
+              <div className="flex justify-end border-t border-slate-200 pt-4">
+                 <div className="text-right">
+                    <p className="text-sm text-slate-500 mb-1">Grand Total</p>
+                    <p className="text-2xl font-bold text-indigo-600">${selectedQuotation.total.toLocaleString()}</p>
+                 </div>
+              </div>
+
+              <div className="mt-8 flex justify-end space-x-3 print:hidden">
+                 <button className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50">Download PDF</button>
+                 <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">Email Quote</button>
+              </div>
+           </div>
         </div>
       )}
     </div>

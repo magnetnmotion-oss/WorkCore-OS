@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
 import { downloadCSV } from '../lib/export';
-import { Item, Warehouse } from '../types';
+import { Item, Warehouse, ViewState } from '../types';
 
-export const Inventory: React.FC = () => {
+interface InventoryProps {
+  onNavigate?: (view: ViewState, data: any) => void;
+}
+
+export const Inventory: React.FC<InventoryProps> = ({ onNavigate }) => {
   const [items, setItems] = useState<Item[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +65,11 @@ export const Inventory: React.FC = () => {
            <h3 className="font-bold text-slate-900 mb-4">Low Stock Alerts</h3>
            <ul className="space-y-3">
              {items.filter(i => i.stockLevel <= i.reOrderLevel).map(item => (
-               <li key={item.id} className="flex items-center justify-between text-sm p-2 bg-red-50 rounded">
+               <li 
+                 key={item.id} 
+                 onClick={() => onNavigate && onNavigate(ViewState.INVENTORY_DETAIL, item.id)}
+                 className="flex items-center justify-between text-sm p-2 bg-red-50 rounded cursor-pointer hover:bg-red-100 transition-colors"
+               >
                  <span className="text-slate-700 font-medium">{item.name} <span className="text-slate-500 font-normal">({item.sku})</span></span>
                  <span className="text-red-600 font-bold">{item.stockLevel} left</span>
                </li>
@@ -93,7 +101,11 @@ export const Inventory: React.FC = () => {
               {loading ? (
                 <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-400">Loading inventory...</td></tr>
               ) : items.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50">
+                <tr 
+                  key={item.id} 
+                  onClick={() => onNavigate && onNavigate(ViewState.INVENTORY_DETAIL, item.id)}
+                  className="hover:bg-slate-50 cursor-pointer transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-500">{item.sku}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{item.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.description}</td>

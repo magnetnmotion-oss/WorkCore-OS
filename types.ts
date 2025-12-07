@@ -4,6 +4,7 @@ export interface User {
   fullName: string;
   role: 'admin' | 'manager' | 'staff';
   orgId: string;
+  status: 'active' | 'pending' | 'disabled';
 }
 
 export type SubscriptionPlanId = 'free' | 'weekly' | 'monthly' | 'annual' | 'enterprise';
@@ -24,18 +25,28 @@ export interface UsageLimit {
 export interface Organization {
   id: string;
   name: string;
-  plan: SubscriptionPlanId; // specific plan identifier
+  plan: SubscriptionPlanId; 
   currency: string;
   timezone: string;
+  
+  // New Setup & Identity Fields
+  setupStatus: 'pending' | 'complete';
+  industry?: string;
+  taxNumber?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  logoUrl?: string; // New
+  
   subscription: Subscription;
   limits: {
     contacts: UsageLimit;
     invoices: UsageLimit;
     inventory: UsageLimit;
     staff: UsageLimit;
-    storage: UsageLimit; // in MB
+    storage: UsageLimit; 
   };
-  unlockedFeatures: string[]; // List of IDs of purchased add-ons
+  unlockedFeatures: string[]; 
 }
 
 export interface SubscriptionPlan {
@@ -63,6 +74,41 @@ export interface Module {
   description: string;
   enabled: boolean;
   price: number;
+}
+
+// Marketing Module (New)
+export interface MarketingCampaign {
+  id: string;
+  name: string;
+  status: 'draft' | 'active' | 'completed';
+  channel: 'WhatsApp' | 'Email' | 'SMS';
+  sentCount: number;
+  deliveredCount: number;
+  clickCount: number;
+  conversionCount: number; // Leads or Orders generated
+  revenueGenerated: number;
+  startDate: string;
+}
+
+export interface MarketingTemplate {
+  id: string;
+  name: string;
+  channel: 'WhatsApp' | 'Email' | 'SMS';
+  content: string;
+  variables: string[]; // e.g. ['customer_name', 'promo_code']
+  thumbnail?: string;
+}
+
+// Notifications (New)
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  timestamp: string;
+  read: boolean;
+  linkTo?: ViewState;
+  linkData?: any;
 }
 
 // Sales Module
@@ -225,6 +271,8 @@ export interface Employee {
   role: string;
   status: 'active' | 'on_leave';
   department: string;
+  salary: number;
+  joinDate: string;
 }
 
 export interface Project {
@@ -234,6 +282,7 @@ export interface Project {
   status: 'active' | 'completed' | 'delayed';
   budget: number;
   dueDate: string;
+  description?: string;
 }
 
 export interface Task {
@@ -248,12 +297,23 @@ export interface Task {
 
 export enum ViewState {
   LOGIN = 'LOGIN',
+  SETUP_WIZARD = 'SETUP_WIZARD',
   DASHBOARD = 'DASHBOARD',
   SALES = 'SALES',
+  INVOICE_DETAIL = 'INVOICE_DETAIL',
   INVENTORY = 'INVENTORY',
+  INVENTORY_DETAIL = 'INVENTORY_DETAIL',
   FINANCE = 'FINANCE',
   HR = 'HR',
+  EMPLOYEE_DETAIL = 'EMPLOYEE_DETAIL',
   OPERATIONS = 'OPERATIONS',
+  PROJECT_DETAIL = 'PROJECT_DETAIL',
   COMMS = 'COMMS',
+  MARKETING = 'MARKETING', // New
   SETTINGS = 'SETTINGS'
+}
+
+export interface NavigationState {
+  view: ViewState;
+  data?: any; 
 }

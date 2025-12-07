@@ -18,6 +18,7 @@ export const Communications: React.FC = () => {
   
   // Ticket State
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   
   // Settings State
   const [showConnectModal, setShowConnectModal] = useState(false);
@@ -412,7 +413,11 @@ export const Communications: React.FC = () => {
         <div className="bg-white shadow-sm rounded-xl border border-slate-100 overflow-hidden">
           <div className="divide-y divide-slate-200">
             {tickets.map((ticket) => (
-              <div key={ticket.id} className="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center cursor-pointer">
+              <div 
+                key={ticket.id} 
+                onClick={() => setSelectedTicket(ticket)}
+                className="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center cursor-pointer"
+              >
                 <div>
                   <div className="flex items-center space-x-3 mb-1">
                     <span className="font-medium text-slate-900">{ticket.subject}</span>
@@ -436,6 +441,66 @@ export const Communications: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Ticket Detail Modal */}
+      {selectedTicket && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl animate-fade-in relative">
+              <button 
+                onClick={() => setSelectedTicket(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              
+              <div className="mb-6 border-b border-slate-100 pb-4">
+                 <div className="flex items-center space-x-3 mb-1">
+                    <h3 className="text-xl font-bold text-slate-900">{selectedTicket.subject}</h3>
+                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${selectedTicket.priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600'}`}>
+                       {selectedTicket.priority.toUpperCase()}
+                    </span>
+                 </div>
+                 <p className="text-sm text-slate-500">Ticket #{selectedTicket.id} • {selectedTicket.clientName}</p>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                 {/* Mock Conversation for Ticket */}
+                 <div className="flex space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold">C</div>
+                    <div className="flex-1 bg-slate-50 p-3 rounded-lg text-sm">
+                       <p className="text-slate-800">Hi, I have an issue with the recent delivery. It arrived damaged.</p>
+                       <p className="text-xs text-slate-400 mt-1">2 days ago</p>
+                    </div>
+                 </div>
+                 <div className="flex space-x-3 flex-row-reverse space-x-reverse">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 text-xs font-bold">You</div>
+                    <div className="flex-1 bg-white border border-slate-200 p-3 rounded-lg text-sm">
+                       <p className="text-slate-800">Sorry to hear that! Could you please provide a photo of the damage?</p>
+                       <p className="text-xs text-slate-400 mt-1">1 day ago</p>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="mt-4">
+                 <label className="block text-sm font-medium text-slate-700 mb-2">Update Status</label>
+                 <div className="flex space-x-2">
+                    {['open', 'in_progress', 'resolved'].map(status => (
+                       <button 
+                         key={status}
+                         className={`flex-1 py-2 text-sm rounded border capitalize ${
+                            selectedTicket.status === status 
+                            ? 'bg-indigo-600 text-white border-indigo-600' 
+                            : 'bg-white text-slate-600 hover:bg-slate-50'
+                         }`}
+                       >
+                          {status.replace('_', ' ')}
+                       </button>
+                    ))}
+                 </div>
+              </div>
+           </div>
         </div>
       )}
     </div>

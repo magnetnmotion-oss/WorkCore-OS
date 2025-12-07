@@ -1,19 +1,24 @@
-import { BusinessMetrics, Invoice, Payment, Expense, Employee, Message, Project, Task, Lead, Quotation, Item, Warehouse, Ticket, Module, Contact, CommunicationMessage, EmailAccount, Organization, SubscriptionPlan, AddOn } from './types';
+import { BusinessMetrics, Invoice, Payment, Expense, Employee, Message, Project, Task, Lead, Quotation, Item, Warehouse, Ticket, Module, Contact, CommunicationMessage, EmailAccount, Organization, SubscriptionPlan, AddOn, User, MarketingCampaign, MarketingTemplate, Notification } from './types';
 
-export const MOCK_USER = {
+export const MOCK_USER: User = {
   id: 'u-123',
   email: 'demo@workcore.os',
   fullName: 'Alex Founder',
-  role: 'admin' as const,
-  orgId: 'org-1'
+  role: 'admin',
+  orgId: 'org-1',
+  status: 'active'
 };
 
 export const MOCK_ORG: Organization = {
   id: 'org-1',
   name: 'Acme Logistics Ltd.',
-  plan: 'free', // Currently on Free Tier
+  plan: 'free', 
   currency: 'KES',
   timezone: 'UTC+3',
+  setupStatus: 'complete', 
+  industry: 'Logistics & Supply Chain',
+  phone: '+254 700 000 000',
+  email: 'admin@acmelogistics.co.ke',
   subscription: {
     planId: 'free',
     status: 'active',
@@ -25,8 +30,8 @@ export const MOCK_ORG: Organization = {
     contacts: { current: 18, max: 20 },
     invoices: { current: 8, max: 10 },
     inventory: { current: 3, max: 10 },
-    staff: { current: 1, max: 1 },
-    storage: { current: 450, max: 500 }, // 450MB used of 500MB
+    staff: { current: 3, max: 1 }, // Example: Current usage exceeds Free plan limit (1 user) to test restriction logic
+    storage: { current: 450, max: 500 }, 
   },
   unlockedFeatures: []
 };
@@ -82,6 +87,27 @@ export const MOCK_MODULES: Module[] = [
   { id: 'mod-hr', name: 'HR & Payroll', description: 'Employee records, Timesheets & Basic Payroll', enabled: true, price: 0 },
   { id: 'mod-ops', name: 'Operations', description: 'Project management & Task tracking', enabled: false, price: 0 },
   { id: 'mod-comms', name: 'Communications', description: 'Unified Inbox (WhatsApp, Email) & Ticketing', enabled: true, price: 0 },
+  { id: 'mod-marketing', name: 'Marketing', description: 'Campaigns, Templates & Analytics', enabled: true, price: 0 },
+];
+
+// Marketing Data
+export const MOCK_CAMPAIGNS: MarketingCampaign[] = [
+  { id: 'camp-1', name: 'End of Month Sale', channel: 'WhatsApp', status: 'active', sentCount: 150, deliveredCount: 148, clickCount: 45, conversionCount: 12, revenueGenerated: 12000, startDate: '2024-06-25' },
+  { id: 'camp-2', name: 'New Arrival Alert', channel: 'Email', status: 'completed', sentCount: 500, deliveredCount: 490, clickCount: 120, conversionCount: 5, revenueGenerated: 2500, startDate: '2024-06-10' },
+  { id: 'camp-3', name: 'Customer Loyalty Promo', channel: 'SMS', status: 'draft', sentCount: 0, deliveredCount: 0, clickCount: 0, conversionCount: 0, revenueGenerated: 0, startDate: '2024-07-01' },
+];
+
+export const MOCK_TEMPLATES: MarketingTemplate[] = [
+  { id: 'tpl-1', name: 'Flash Sale', channel: 'WhatsApp', content: 'Hi {{customer_name}}, Flash Sale Alert! ⚡ Get 20% OFF on all electronics today. Use code: FLASH20. Shop here: {{link}}', variables: ['customer_name', 'link'] },
+  { id: 'tpl-2', name: 'Invoice Reminder', channel: 'WhatsApp', content: 'Hello {{customer_name}}, gentle reminder that invoice {{invoice_number}} is due tomorrow. Pay via M-Pesa: {{paybill}}', variables: ['customer_name', 'invoice_number', 'paybill'] },
+  { id: 'tpl-3', name: 'Newsletter', channel: 'Email', content: '<h1>Monthly Updates</h1><p>Dear {{customer_name}}, check out our latest products...</p>', variables: ['customer_name'] },
+];
+
+// Notifications
+export const MOCK_NOTIFICATIONS: Notification[] = [
+  { id: 'not-1', title: 'New Order Received', message: 'Order #1234 from John Doe has been placed.', type: 'success', timestamp: '2 mins ago', read: false },
+  { id: 'not-2', title: 'Low Stock Alert', message: 'Industrial Drill stock is below reorder level (15 left).', type: 'warning', timestamp: '1 hour ago', read: false },
+  { id: 'not-3', title: 'Payment Failed', message: 'Subscription renewal payment failed. Please update card.', type: 'error', timestamp: 'Yesterday', read: true },
 ];
 
 export const MOCK_METRICS: BusinessMetrics = {
@@ -173,9 +199,9 @@ export const MOCK_EXPENSES: Expense[] = [
 
 // HR Data
 export const MOCK_EMPLOYEES: Employee[] = [
-  { id: 'emp-1', fullName: 'John Doe', role: 'Driver', department: 'Logistics', status: 'active' },
-  { id: 'emp-2', fullName: 'Jane Smith', role: 'Accountant', department: 'Finance', status: 'active' },
-  { id: 'emp-3', fullName: 'Bob Johnson', role: 'Sales Rep', department: 'Sales', status: 'on_leave' },
+  { id: 'emp-1', fullName: 'John Doe', role: 'Driver', department: 'Logistics', status: 'active', salary: 35000, joinDate: '2023-01-15' },
+  { id: 'emp-2', fullName: 'Jane Smith', role: 'Accountant', department: 'Finance', status: 'active', salary: 55000, joinDate: '2022-11-01' },
+  { id: 'emp-3', fullName: 'Bob Johnson', role: 'Sales Rep', department: 'Sales', status: 'on_leave', salary: 45000, joinDate: '2023-05-20' },
 ];
 
 // Comms Data
@@ -234,4 +260,10 @@ export const MOCK_TASKS: Task[] = [
   { id: 't-2', projectId: 'p-1', title: 'Schedule Posts', assignedTo: 'Mike Marketing', status: 'todo', priority: 'medium', dueDate: '2024-08-20' },
   { id: 't-3', projectId: 'p-2', title: 'Hire Movers', assignedTo: 'Bob Builder', status: 'done', priority: 'high', dueDate: '2024-05-10' },
   { id: 't-4', projectId: 'p-2', title: 'Update Address Google Maps', assignedTo: 'Admin Staff', status: 'todo', priority: 'low', dueDate: '2024-11-01' }
+];
+
+export const MOCK_USERS_LIST: User[] = [
+  { id: 'u-123', email: 'demo@workcore.os', fullName: 'Alex Founder', role: 'admin', orgId: 'org-1', status: 'active' },
+  { id: 'u-124', email: 'manager@workcore.os', fullName: 'Sarah Manager', role: 'manager', orgId: 'org-1', status: 'active' },
+  { id: 'u-125', email: 'staff@workcore.os', fullName: 'John Staff', role: 'staff', orgId: 'org-1', status: 'active' },
 ];

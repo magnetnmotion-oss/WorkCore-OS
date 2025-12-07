@@ -4,9 +4,13 @@ import { StatCard } from '../components/StatCard';
 import { apiFetch } from '../lib/api';
 import { MOCK_METRICS } from '../constants'; // Fallback type structure
 import { generateBusinessInsights } from '../services/geminiService';
-import { Insight, BusinessMetrics, Invoice, Item, Task, Message } from '../types';
+import { Insight, BusinessMetrics, Invoice, Item, Task, Message, ViewState } from '../types';
 
-export const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onNavigate: (view: ViewState, data?: any) => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [metrics, setMetrics] = useState<BusinessMetrics>(MOCK_METRICS);
   
@@ -213,6 +217,7 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
            <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-slate-900">Recent Invoices</h3>
+              <button onClick={() => onNavigate(ViewState.SALES)} className="text-sm text-indigo-600 font-medium hover:underline">View All</button>
            </div>
            <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
@@ -225,7 +230,11 @@ export const Dashboard: React.FC = () => {
                  </thead>
                  <tbody className="divide-y divide-slate-50">
                     {recentInvoices.map(inv => (
-                       <tr key={inv.id}>
+                       <tr 
+                         key={inv.id} 
+                         onClick={() => onNavigate(ViewState.INVOICE_DETAIL, inv.id)}
+                         className="cursor-pointer hover:bg-slate-50 transition-colors"
+                       >
                           <td className="py-2.5 font-medium text-slate-900">{inv.invoiceNumber}</td>
                           <td className="py-2.5 text-slate-500">{inv.clientName}</td>
                           <td className="py-2.5 text-right font-medium text-slate-900">${inv.total.toLocaleString()}</td>
@@ -243,12 +252,17 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
            <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-slate-900">Inventory Alerts</h3>
+              <button onClick={() => onNavigate(ViewState.INVENTORY)} className="text-sm text-indigo-600 font-medium hover:underline">Manage</button>
            </div>
            <ul className="space-y-3">
               {lowStockItems.length === 0 ? (
                 <li className="text-sm text-slate-400 py-2">Stock levels are healthy.</li>
               ) : lowStockItems.map(item => (
-                 <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-lg">
+                 <li 
+                   key={item.id} 
+                   onClick={() => onNavigate(ViewState.INVENTORY_DETAIL, item.id)}
+                   className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
+                 >
                     <div>
                       <span className="block text-slate-700 font-medium">{item.name}</span>
                       <span className="text-xs text-slate-500">{item.sku}</span>
@@ -263,12 +277,17 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
            <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-slate-900">Pending Priority Tasks</h3>
+              <button onClick={() => onNavigate(ViewState.OPERATIONS)} className="text-sm text-indigo-600 font-medium hover:underline">Operations Board</button>
            </div>
             <ul className="space-y-4">
               {pendingTasks.length === 0 ? (
                  <li className="text-sm text-slate-400">No pending high priority tasks.</li>
               ) : pendingTasks.map(task => (
-                 <li key={task.id} className="flex items-start space-x-3 text-sm">
+                 <li 
+                   key={task.id} 
+                   onClick={() => onNavigate(ViewState.OPERATIONS)}
+                   className="flex items-start space-x-3 text-sm cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors"
+                 >
                     <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
                     <div className="flex-1 min-w-0">
                        <p className="text-slate-900 font-medium truncate">{task.title}</p>
@@ -284,12 +303,17 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
            <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-slate-900">Latest Messages</h3>
+              <button onClick={() => onNavigate(ViewState.COMMS)} className="text-sm text-indigo-600 font-medium hover:underline">Inbox</button>
            </div>
             <div className="space-y-4">
               {recentMessages.length === 0 ? (
                  <p className="text-sm text-slate-400">Inbox is empty.</p>
               ) : recentMessages.map(msg => (
-                 <div key={msg.id} className="flex items-start space-x-3 text-sm">
+                 <div 
+                   key={msg.id} 
+                   onClick={() => onNavigate(ViewState.COMMS)}
+                   className="flex items-start space-x-3 text-sm cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors"
+                 >
                     <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full ${msg.channel === 'WhatsApp' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
                        <span className="text-[10px] font-bold uppercase">{msg.channel[0]}</span>
                     </div>
