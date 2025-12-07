@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -309,8 +310,8 @@ export enum ViewState {
   OPERATIONS = 'OPERATIONS',
   PROJECT_DETAIL = 'PROJECT_DETAIL',
   COMMS = 'COMMS',
-  MARKETING = 'MARKETING', // New
-  SETTINGS = 'SETTINGS'
+  MARKETING = 'MARKETING', 
+  UPGRADE = 'UPGRADE' // Renamed from SETTINGS
 }
 
 export interface NavigationState {

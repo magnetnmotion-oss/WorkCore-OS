@@ -27,7 +27,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
     <div className="space-y-6 animate-fade-in h-full flex flex-col">
        <div className="flex justify-between items-start">
          <div>
-            <button onClick={onBack} className="text-slate-500 hover:text-indigo-600 flex items-center space-x-2 text-sm font-medium mb-4">
+            <button onClick={onBack} className="text-slate-500 hover:text-blue-800 flex items-center space-x-2 text-sm font-medium mb-4">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 <span>Back to Operations</span>
             </button>
@@ -35,7 +35,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
             <p className="text-slate-500">{project.manager} • Due {project.dueDate}</p>
          </div>
          <div className="flex space-x-2">
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">+ Add Task</button>
+            <button className="bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900">+ Add Task</button>
          </div>
        </div>
 

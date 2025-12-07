@@ -39,13 +39,13 @@ export const InventoryDetail: React.FC<InventoryDetailProps> = ({ itemId, onBack
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-         <button onClick={onBack} className="text-slate-500 hover:text-indigo-600 flex items-center space-x-2 text-sm font-medium">
+         <button onClick={onBack} className="text-slate-500 hover:text-blue-800 flex items-center space-x-2 text-sm font-medium">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             <span>Back to Inventory</span>
          </button>
          <div className="flex space-x-2">
             <button className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50">Edit Item</button>
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">+ New Stock Order</button>
+            <button className="px-4 py-2 bg-blue-800 text-white rounded-lg text-sm font-medium hover:bg-blue-900">+ New Stock Order</button>
          </div>
       </div>
 
@@ -88,15 +88,15 @@ export const InventoryDetail: React.FC<InventoryDetailProps> = ({ itemId, onBack
                   <AreaChart data={stockHistoryData}>
                     <defs>
                       <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#1e40af" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#1e40af" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="date" hide />
                     <YAxis />
                     <Tooltip />
-                    <Area type="monotone" dataKey="stock" stroke="#4F46E5" fillOpacity={1} fill="url(#colorStock)" />
+                    <Area type="monotone" dataKey="stock" stroke="#1e40af" fillOpacity={1} fill="url(#colorStock)" />
                   </AreaChart>
                </ResponsiveContainer>
             </div>

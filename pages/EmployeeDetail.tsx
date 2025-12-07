@@ -25,14 +25,14 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employeeId, onBa
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <button onClick={onBack} className="text-slate-500 hover:text-indigo-600 flex items-center space-x-2 text-sm font-medium">
+      <button onClick={onBack} className="text-slate-500 hover:text-blue-800 flex items-center space-x-2 text-sm font-medium">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
         <span>Back to Team</span>
       </button>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Cover */}
-        <div className="h-32 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+        <div className="h-32 bg-gradient-to-r from-blue-700 to-blue-900"></div>
         
         <div className="px-8 pb-8">
            <div className="relative flex justify-between items-end -mt-12 mb-6">
@@ -49,7 +49,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employeeId, onBa
               </div>
               <div className="mb-2 space-x-3">
                  <button className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50">Edit Profile</button>
-                 <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Run Payroll</button>
+                 <button className="px-4 py-2 bg-blue-800 text-white rounded-lg text-sm font-medium hover:bg-blue-900">Run Payroll</button>
               </div>
            </div>
 
@@ -78,7 +78,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employeeId, onBa
                  <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-2">Leave Balance</h3>
                  <div className="flex space-x-4">
                     <div className="bg-slate-50 p-3 rounded-lg flex-1 text-center">
-                       <p className="text-2xl font-bold text-indigo-600">12</p>
+                       <p className="text-2xl font-bold text-blue-800">12</p>
                        <p className="text-xs text-slate-500 uppercase font-bold">Annual</p>
                     </div>
                     <div className="bg-slate-50 p-3 rounded-lg flex-1 text-center">
@@ -86,7 +86,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employeeId, onBa
                        <p className="text-xs text-slate-500 uppercase font-bold">Sick</p>
                     </div>
                  </div>
-                 <button className="text-indigo-600 text-sm font-medium hover:underline block text-center w-full">Request Leave</button>
+                 <button className="text-blue-800 text-sm font-medium hover:underline block text-center w-full">Request Leave</button>
               </div>
 
               {/* Attendance */}

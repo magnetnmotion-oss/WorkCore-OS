@@ -63,7 +63,7 @@ export const Marketing: React.FC = () => {
         <div className="flex space-x-3">
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             + Create Campaign
           </button>
@@ -76,7 +76,7 @@ export const Marketing: React.FC = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
-              className={`${activeTab === tab ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize`}
+              className={`${activeTab === tab ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize`}
             >
               {tab}
             </button>
@@ -97,7 +97,7 @@ export const Marketing: React.FC = () => {
                   </div>
                   <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
                      <p className="text-sm font-medium text-slate-500">Total Clicks</p>
-                     <h3 className="text-2xl font-bold text-indigo-600 mt-1">{campaigns.reduce((acc, c) => acc + c.clickCount, 0).toLocaleString()}</h3>
+                     <h3 className="text-2xl font-bold text-blue-800 mt-1">{campaigns.reduce((acc, c) => acc + c.clickCount, 0).toLocaleString()}</h3>
                   </div>
                   <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
                      <p className="text-sm font-medium text-slate-500">Revenue Generated</p>
@@ -116,7 +116,7 @@ export const Marketing: React.FC = () => {
                            <YAxis />
                            <Tooltip />
                            <Legend />
-                           <Bar dataKey="clicks" fill="#4F46E5" name="Clicks" />
+                           <Bar dataKey="clicks" fill="#1e40af" name="Clicks" />
                            <Bar dataKey="conversions" fill="#10B981" name="Conversions" />
                         </BarChart>
                      </ResponsiveContainer>
@@ -181,7 +181,7 @@ export const Marketing: React.FC = () => {
                               </span>
                            </td>
                            <td className="px-6 py-4 text-right text-sm text-slate-500">{camp.sentCount.toLocaleString()}</td>
-                           <td className="px-6 py-4 text-right text-sm font-medium text-indigo-600">{camp.clickCount.toLocaleString()}</td>
+                           <td className="px-6 py-4 text-right text-sm font-medium text-blue-800">{camp.clickCount.toLocaleString()}</td>
                            <td className="px-6 py-4 text-right text-sm font-bold text-green-600">KES {camp.revenueGenerated.toLocaleString()}</td>
                         </tr>
                      ))}
@@ -201,7 +201,7 @@ export const Marketing: React.FC = () => {
                            'bg-slate-50 text-slate-700 border-slate-200'
                         }`}>{tpl.channel}</span>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                           <button className="text-indigo-600 text-sm font-medium hover:underline">Edit</button>
+                           <button className="text-blue-800 text-sm font-medium hover:underline">Edit</button>
                         </div>
                      </div>
                      <h4 className="font-bold text-slate-900 mb-2">{tpl.name}</h4>
@@ -210,7 +210,7 @@ export const Marketing: React.FC = () => {
                      </div>
                      <div className="flex flex-wrap gap-2">
                         {tpl.variables.map(v => (
-                           <span key={v} className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100">
+                           <span key={v} className="text-[10px] bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded border border-blue-100">
                               {`{{${v}}}`}
                            </span>
                         ))}
@@ -219,7 +219,7 @@ export const Marketing: React.FC = () => {
                ))}
                
                {/* Create Template Card */}
-               <div className="border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center p-6 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 transition-colors cursor-pointer min-h-[250px]">
+               <div className="border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center p-6 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-colors cursor-pointer min-h-[250px]">
                   <svg className="w-10 h-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                   <span className="font-medium">Create New Template</span>
                </div>
@@ -240,7 +240,7 @@ export const Marketing: React.FC = () => {
                        type="text" 
                        value={newCampaignName}
                        onChange={e => setNewCampaignName(e.target.value)}
-                       className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                       className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-800"
                        placeholder="e.g. Summer Sale"
                      />
                   </div>
@@ -251,7 +251,7 @@ export const Marketing: React.FC = () => {
                            <button
                               key={chan}
                               onClick={() => setNewCampaignChannel(chan as any)}
-                              className={`py-2 text-sm font-medium rounded-lg border ${newCampaignChannel === chan ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                              className={`py-2 text-sm font-medium rounded-lg border ${newCampaignChannel === chan ? 'bg-blue-50 border-blue-800 text-blue-900' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                            >
                               {chan}
                            </button>
@@ -261,7 +261,7 @@ export const Marketing: React.FC = () => {
                </div>
                <div className="mt-6 flex justify-end space-x-3">
                   <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancel</button>
-                  <button onClick={handleCreateCampaign} className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg">Launch</button>
+                  <button onClick={handleCreateCampaign} className="px-4 py-2 bg-blue-800 text-white font-medium hover:bg-blue-900 rounded-lg">Launch</button>
                </div>
             </div>
          </div>
@@ -296,9 +296,9 @@ export const Marketing: React.FC = () => {
                     <span className="block text-slate-500 text-xs font-bold uppercase mb-1">Delivered</span>
                     <span className="text-2xl font-bold text-slate-900">{selectedCampaign.deliveredCount}</span>
                  </div>
-                 <div className="bg-indigo-50 p-4 rounded-xl text-center">
-                    <span className="block text-indigo-500 text-xs font-bold uppercase mb-1">Clicks</span>
-                    <span className="text-2xl font-bold text-indigo-700">{selectedCampaign.clickCount}</span>
+                 <div className="bg-blue-50 p-4 rounded-xl text-center">
+                    <span className="block text-blue-800 text-xs font-bold uppercase mb-1">Clicks</span>
+                    <span className="text-2xl font-bold text-blue-900">{selectedCampaign.clickCount}</span>
                  </div>
                  <div className="bg-green-50 p-4 rounded-xl text-center">
                     <span className="block text-green-500 text-xs font-bold uppercase mb-1">Conversions</span>
@@ -324,7 +324,7 @@ export const Marketing: React.FC = () => {
                        <XAxis type="number" />
                        <YAxis type="category" dataKey="name" width={80} />
                        <Tooltip cursor={{fill: 'transparent'}} />
-                       <Bar dataKey="value" fill="#4F46E5" radius={[0, 4, 4, 0]} barSize={30}>
+                       <Bar dataKey="value" fill="#1e40af" radius={[0, 4, 4, 0]} barSize={30}>
                           {
                              [0,1,2,3].map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

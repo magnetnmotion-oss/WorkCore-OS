@@ -2,7 +2,7 @@ import { BusinessMetrics, Invoice, Payment, Expense, Employee, Message, Project,
 
 export const MOCK_USER: User = {
   id: 'u-123',
-  email: 'demo@workcore.os',
+  email: 'demo@ommi.io',
   fullName: 'Alex Kamau',
   role: 'admin',
   orgId: 'org-1',
@@ -263,7 +263,7 @@ export const MOCK_TASKS: Task[] = [
 ];
 
 export const MOCK_USERS_LIST: User[] = [
-  { id: 'u-123', email: 'demo@workcore.os', fullName: 'Alex Kamau', role: 'admin', orgId: 'org-1', status: 'active' },
-  { id: 'u-124', email: 'manager@workcore.os', fullName: 'Sarah Manager', role: 'manager', orgId: 'org-1', status: 'active' },
-  { id: 'u-125', email: 'staff@workcore.os', fullName: 'John Staff', role: 'staff', orgId: 'org-1', status: 'active' },
+  { id: 'u-123', email: 'demo@ommi.io', fullName: 'Alex Kamau', role: 'admin', orgId: 'org-1', status: 'active' },
+  { id: 'u-124', email: 'manager@ommi.io', fullName: 'Sarah Manager', role: 'manager', orgId: 'org-1', status: 'active' },
+  { id: 'u-125', email: 'staff@ommi.io', fullName: 'John Staff', role: 'staff', orgId: 'org-1', status: 'active' },
 ];

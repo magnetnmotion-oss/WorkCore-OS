@@ -73,7 +73,7 @@ export const Finance: React.FC = () => {
           </button>
           <button 
             onClick={() => setShowExpenseModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             + Record Expense
           </button>
@@ -84,13 +84,13 @@ export const Finance: React.FC = () => {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('payments')}
-            className={`${activeTab === 'payments' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            className={`${activeTab === 'payments' ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Payments
           </button>
           <button
             onClick={() => setActiveTab('expenses')}
-            className={`${activeTab === 'expenses' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            className={`${activeTab === 'expenses' ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Expenses
           </button>
@@ -173,7 +173,7 @@ export const Finance: React.FC = () => {
                       type="number" 
                       value={newExpense.amount} 
                       onChange={e => setNewExpense({...newExpense, amount: e.target.value})} 
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-800" 
                     />
                  </div>
                  <div>
@@ -195,13 +195,13 @@ export const Finance: React.FC = () => {
                     <textarea 
                       value={newExpense.description} 
                       onChange={e => setNewExpense({...newExpense, description: e.target.value})} 
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none" 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-800 h-24 resize-none" 
                     />
                  </div>
               </div>
               <div className="mt-8 flex justify-end space-x-3">
                  <button onClick={() => setShowExpenseModal(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancel</button>
-                 <button onClick={handleAddExpense} className="px-6 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg">Save Record</button>
+                 <button onClick={handleAddExpense} className="px-6 py-2 bg-blue-800 text-white font-medium hover:bg-blue-900 rounded-lg">Save Record</button>
               </div>
            </div>
         </div>
@@ -240,7 +240,7 @@ export const Finance: React.FC = () => {
                     </div>
                     <div>
                        <p className="text-slate-500 mb-1">Linked Invoice</p>
-                       <p className="text-indigo-600 font-medium cursor-pointer hover:underline">{selectedPayment.invoiceId}</p>
+                       <p className="text-blue-800 font-medium cursor-pointer hover:underline">{selectedPayment.invoiceId}</p>
                     </div>
                  </div>
 

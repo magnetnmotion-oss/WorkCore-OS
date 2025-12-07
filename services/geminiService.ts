@@ -16,7 +16,7 @@ export const generateBusinessInsights = async (metrics: BusinessMetrics): Promis
   const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `
-    You are an advanced business analyst for the WorkCore OS platform.
+    You are an advanced business analyst for the OMMI platform.
     Analyze the following business metrics for an SME and provide 3 concise, actionable insights.
     
     Metrics:

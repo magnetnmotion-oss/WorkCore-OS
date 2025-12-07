@@ -23,7 +23,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, trend, trendUp
         )}
       </div>
       {icon && (
-        <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
+        <div className="p-3 bg-blue-50 rounded-lg text-blue-900">
           {icon}
         </div>
       )}

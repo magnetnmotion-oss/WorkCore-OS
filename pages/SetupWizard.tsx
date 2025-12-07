@@ -66,7 +66,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
           </div>
           <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-indigo-600 transition-all duration-500" 
+              className="h-full bg-blue-900 transition-all duration-500" 
               style={{ width: `${(step / totalSteps) * 100}%` }}
             ></div>
           </div>
@@ -75,7 +75,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 md:p-12">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome to WorkCore OS</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome to OMMI</h1>
             <p className="text-slate-500">Let's get your business operating system set up in minutes.</p>
           </div>
 
@@ -88,7 +88,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   type="text" 
                   value={formData.businessName}
                   onChange={e => setFormData({...formData, businessName: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-900 outline-none"
                   placeholder="e.g. Acme Traders Ltd"
                 />
               </div>
@@ -98,7 +98,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   <select 
                     value={formData.industry}
                     onChange={e => setFormData({...formData, industry: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-900 outline-none bg-white"
                   >
                     <option>Retail</option>
                     <option>Logistics</option>
@@ -113,7 +113,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     type="email" 
                     value={formData.email}
                     onChange={e => setFormData({...formData, email: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-900 outline-none"
                     placeholder="help@acme.com"
                   />
                 </div>
@@ -129,7 +129,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <select 
                   value={formData.currency}
                   onChange={e => setFormData({...formData, currency: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                  className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-900 outline-none bg-white"
                 >
                   <option value="KES">Kenyan Shilling (KES)</option>
                   <option value="USD">US Dollar (USD)</option>
@@ -143,7 +143,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   type="text" 
                   value={formData.taxNumber}
                   onChange={e => setFormData({...formData, taxNumber: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-900 outline-none"
                   placeholder="e.g. P051XXXXXX"
                 />
                 <p className="text-xs text-slate-500 mt-2">Required for invoice generation.</p>
@@ -156,9 +156,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             <div className="space-y-6 animate-fade-in">
               <h3 className="font-bold text-slate-900">Enable Core Modules</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border-2 border-indigo-100 bg-indigo-50 rounded-xl cursor-default">
-                  <span className="font-bold text-indigo-700">Sales & Invoicing</span>
-                  <p className="text-xs text-indigo-600 mt-1">Core Requirement</p>
+                <div className="p-4 border-2 border-blue-100 bg-blue-50 rounded-xl cursor-default">
+                  <span className="font-bold text-blue-900">Sales & Invoicing</span>
+                  <p className="text-xs text-blue-800 mt-1">Core Requirement</p>
                 </div>
                 <div className="p-4 border border-slate-200 rounded-xl flex items-center justify-between">
                   <div>
@@ -201,7 +201,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   type="checkbox" 
                   checked={formData.acceptTerms}
                   onChange={e => setFormData({...formData, acceptTerms: e.target.checked})}
-                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="rounded border-slate-300 text-blue-900 focus:ring-blue-900"
                 />
                 <span className="text-sm text-slate-600">I agree to the Terms of Service</span>
               </div>
@@ -220,7 +220,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             <button 
               onClick={handleNext}
               disabled={(step === 1 && !formData.businessName) || (step === 4 && !formData.acceptTerms) || loading}
-              className={`px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
+              className={`px-8 py-3 bg-blue-900 text-white font-bold rounded-lg shadow-lg hover:bg-blue-800 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
             >
               {loading ? 'Setting up...' : step === totalSteps ? 'Launch Dashboard' : 'Continue'}
             </button>

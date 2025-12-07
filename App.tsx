@@ -11,8 +11,8 @@ import { EmployeeDetail } from './pages/EmployeeDetail';
 import { Operations } from './pages/Operations';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { Communications } from './pages/Communications';
-import { Marketing } from './pages/Marketing'; // New
-import { Settings } from './pages/Settings';
+import { Marketing } from './pages/Marketing'; 
+import { Upgrade } from './pages/Settings'; // Renamed import
 import { Login } from './pages/Login';
 import { SetupWizard } from './pages/SetupWizard';
 import { ViewState, NavigationState, Organization } from './types';
@@ -85,8 +85,8 @@ const App: React.FC = () => {
         return <Marketing />;
       case ViewState.COMMS:
         return <Communications />;
-      case ViewState.SETTINGS:
-        return <Settings />;
+      case ViewState.UPGRADE:
+        return <Upgrade />;
       default:
         return <Dashboard onNavigate={handleNavigate} />;
     }

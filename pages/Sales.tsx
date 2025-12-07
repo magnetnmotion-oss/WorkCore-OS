@@ -113,7 +113,7 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
           </button>
           <button 
             onClick={handleCreateClick}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             + New {activeTab === 'leads' ? 'Lead' : activeTab === 'quotations' ? 'Quote' : 'Invoice'}
           </button>
@@ -122,9 +122,9 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
 
       <div className="border-b border-slate-200">
         <nav className="-mb-px flex space-x-8">
-          <button onClick={() => setActiveTab('invoices')} className={`${activeTab === 'invoices' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Invoices</button>
-          <button onClick={() => setActiveTab('leads')} className={`${activeTab === 'leads' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Leads</button>
-          <button onClick={() => setActiveTab('quotations')} className={`${activeTab === 'quotations' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Quotations</button>
+          <button onClick={() => setActiveTab('invoices')} className={`${activeTab === 'invoices' ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Invoices</button>
+          <button onClick={() => setActiveTab('leads')} className={`${activeTab === 'leads' ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Leads</button>
+          <button onClick={() => setActiveTab('quotations')} className={`${activeTab === 'quotations' ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Quotations</button>
         </nav>
       </div>
 
@@ -134,36 +134,47 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
         <div className="bg-white shadow-sm rounded-xl border border-slate-100 overflow-hidden">
           <div className="overflow-x-auto">
             {activeTab === 'invoices' && (
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Invoice #</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Client</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Due Date</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Total</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
-                  {invoices.map((inv) => (
-                    <tr 
-                      key={inv.id} 
-                      onClick={() => onNavigate && onNavigate(ViewState.INVOICE_DETAIL, inv.id)}
-                      className="hover:bg-slate-50 cursor-pointer transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">{inv.invoiceNumber}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{inv.clientName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{inv.dueDate}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-slate-900">KES {inv.total.toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inv.status === 'paid' ? 'bg-green-100 text-green-800' : inv.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                          {inv.status}
-                        </span>
-                      </td>
+              invoices.length === 0 ? (
+                <div className="p-12 text-center flex flex-col items-center justify-center">
+                   <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                   </div>
+                   <h3 className="text-lg font-bold text-slate-900">No Invoices Yet</h3>
+                   <p className="text-slate-500 mb-6">Create your first invoice to get paid.</p>
+                   <button onClick={handleCreateClick} className="bg-blue-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-900">Create Invoice</button>
+                </div>
+              ) : (
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Invoice #</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Client</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Due Date</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Total</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {invoices.map((inv) => (
+                      <tr 
+                        key={inv.id} 
+                        onClick={() => onNavigate && onNavigate(ViewState.INVOICE_DETAIL, inv.id)}
+                        className="hover:bg-slate-50 cursor-pointer transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">{inv.invoiceNumber}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{inv.clientName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{inv.dueDate}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-slate-900">KES {inv.total.toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inv.status === 'paid' ? 'bg-green-100 text-green-800' : inv.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                            {inv.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
 
             {/* Leads Table - Rendered only if tab active */}
@@ -196,6 +207,9 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-slate-900">KES {lead.value.toLocaleString()}</td>
                     </tr>
                   ))}
+                  {leads.length === 0 && (
+                    <tr><td colSpan={5} className="py-8 text-center text-slate-400">No leads found. Add a lead to start tracking.</td></tr>
+                  )}
                 </tbody>
               </table>
             )}
@@ -230,6 +244,9 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{q.expiresAt}</td>
                     </tr>
                   ))}
+                  {quotations.length === 0 && (
+                    <tr><td colSpan={5} className="py-8 text-center text-slate-400">No quotations found.</td></tr>
+                  )}
                 </tbody>
               </table>
             )}
@@ -250,7 +267,7 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
                           type="text" 
                           value={newInvoiceData.clientName} 
                           onChange={e => setNewInvoiceData({...newInvoiceData, clientName: e.target.value})} 
-                          className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                          className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-800" 
                         />
                     </div>
                     <div>
@@ -259,7 +276,7 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
                           type="date" 
                           value={newInvoiceData.dueDate} 
                           onChange={e => setNewInvoiceData({...newInvoiceData, dueDate: e.target.value})} 
-                          className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                          className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-800" 
                         />
                     </div>
                  </div>
@@ -300,12 +317,12 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
                           </div>
                        </div>
                     ))}
-                    <button onClick={handleAddLineItem} className="text-sm text-indigo-600 font-medium hover:underline">+ Add Item</button>
+                    <button onClick={handleAddLineItem} className="text-sm text-blue-800 font-medium hover:underline">+ Add Item</button>
                  </div>
               </div>
               <div className="mt-8 flex justify-end space-x-3">
                  <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancel</button>
-                 <button onClick={handleCreateInvoice} className="px-6 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg">Create Invoice</button>
+                 <button onClick={handleCreateInvoice} className="px-6 py-2 bg-blue-800 text-white font-medium hover:bg-blue-900 rounded-lg">Create Invoice</button>
               </div>
            </div>
         </div>
@@ -330,7 +347,7 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
               </div>
               <div className="mt-6 flex justify-end space-x-3">
                  <button className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50">Edit</button>
-                 <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">Convert to Deal</button>
+                 <button className="px-4 py-2 bg-blue-800 text-white rounded-lg font-medium hover:bg-blue-900">Convert to Deal</button>
               </div>
            </div>
         </div>
@@ -356,7 +373,7 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
                     ))}
                  </tbody>
               </table>
-              <div className="flex justify-end border-t border-slate-200 pt-4"><div className="text-right"><p className="text-sm text-slate-500 mb-1">Grand Total</p><p className="text-2xl font-bold text-indigo-600">KES {selectedQuotation.total.toLocaleString()}</p></div></div>
+              <div className="flex justify-end border-t border-slate-200 pt-4"><div className="text-right"><p className="text-sm text-slate-500 mb-1">Grand Total</p><p className="text-2xl font-bold text-blue-800">KES {selectedQuotation.total.toLocaleString()}</p></div></div>
            </div>
         </div>
       )}

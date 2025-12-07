@@ -37,7 +37,7 @@ export const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoiceId, onBack 
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-      <button onClick={onBack} className="text-slate-500 hover:text-indigo-600 flex items-center space-x-2 text-sm font-medium">
+      <button onClick={onBack} className="text-slate-500 hover:text-blue-800 flex items-center space-x-2 text-sm font-medium">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
         <span>Back to Invoices</span>
       </button>
@@ -110,7 +110,7 @@ export const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoiceId, onBack 
                  <span className="text-slate-500">Tax (16%)</span>
                  <span className="font-medium text-slate-900">KES {(invoice.total * 0.16).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold border-t border-slate-200 pt-3 text-indigo-600">
+              <div className="flex justify-between text-lg font-bold border-t border-slate-200 pt-3 text-blue-800">
                  <span>Total Due</span>
                  <span>KES {(invoice.total * 1.16).toLocaleString()}</span>
               </div>

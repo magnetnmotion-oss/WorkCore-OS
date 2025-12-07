@@ -1,41 +1,52 @@
 import { MOCK_INVOICES, MOCK_PAYMENTS, MOCK_EXPENSES, MOCK_EMPLOYEES, MOCK_MESSAGES, MOCK_METRICS, MOCK_PROJECTS, MOCK_TASKS, MOCK_LEADS, MOCK_QUOTATIONS, MOCK_ITEMS, MOCK_WAREHOUSES, MOCK_TICKETS, MOCK_MODULES, MOCK_ORG, MOCK_CONTACTS, MOCK_COMMUNICATION_HISTORY, MOCK_EMAIL_ACCOUNTS, MOCK_USERS_LIST, MOCK_CAMPAIGNS, MOCK_TEMPLATES, MOCK_NOTIFICATIONS } from '../constants';
-import { CommunicationMessage, EmailAccount, User, MarketingCampaign, MarketingTemplate, Notification, Employee, Item, Invoice, Project, Expense } from '../types';
+import { CommunicationMessage, EmailAccount, User, MarketingCampaign, MarketingTemplate, Notification, Employee, Item, Invoice, Project, Expense, Organization, Lead, Quotation, Task, Ticket, Contact, Message } from '../types';
 
-let currentOrg = { ...MOCK_ORG };
-let currentUsers = [...MOCK_USERS_LIST];
-let currentEmployees = [...MOCK_EMPLOYEES]; 
-let currentItems = [...MOCK_ITEMS];
-let currentInvoices = [...MOCK_INVOICES];
-let currentProjects = [...MOCK_PROJECTS];
-let currentExpenses = [...MOCK_EXPENSES];
-let currentCampaigns = [...MOCK_CAMPAIGNS];
-let currentNotifications = [...MOCK_NOTIFICATIONS];
+// Mock DB State - Mutable
+let currentOrg: Organization = { ...MOCK_ORG };
+let currentUsers: User[] = [...MOCK_USERS_LIST];
+let currentEmployees: Employee[] = [...MOCK_EMPLOYEES]; 
+let currentItems: Item[] = [...MOCK_ITEMS];
+let currentInvoices: Invoice[] = [...MOCK_INVOICES];
+let currentProjects: Project[] = [...MOCK_PROJECTS];
+let currentTasks: Task[] = [...MOCK_TASKS];
+let currentExpenses: Expense[] = [...MOCK_EXPENSES];
+let currentCampaigns: MarketingCampaign[] = [...MOCK_CAMPAIGNS];
+let currentNotifications: Notification[] = [...MOCK_NOTIFICATIONS];
+let currentLeads: Lead[] = [...MOCK_LEADS];
+let currentQuotations: Quotation[] = [...MOCK_QUOTATIONS];
+let currentMessages: Message[] = [...MOCK_MESSAGES];
+let currentTickets: Ticket[] = [...MOCK_TICKETS];
+let currentContacts: Contact[] = [...MOCK_CONTACTS];
+let currentMetrics = { ...MOCK_METRICS };
 
-const MOCK_DB: Record<string, any> = {
-  '/api/v1/leads': MOCK_LEADS,
-  '/api/v1/quotations': MOCK_QUOTATIONS,
+// Simulate Auth Context
+let activeUserId = 'u-123'; 
+
+// Helper to update DB references
+const updateMockDB = () => ({
+  '/api/v1/leads': currentLeads,
+  '/api/v1/quotations': currentQuotations,
   '/api/v1/invoices': currentInvoices,
-  '/api/v1/payments': MOCK_PAYMENTS,
+  '/api/v1/payments': MOCK_PAYMENTS, // Keep payments mock for now or reset if needed
   '/api/v1/expenses': currentExpenses,
   '/api/v1/items': currentItems,
   '/api/v1/warehouses': MOCK_WAREHOUSES,
   '/api/v1/employees': currentEmployees,
-  '/api/v1/messages': MOCK_MESSAGES, 
-  '/api/v1/tickets': MOCK_TICKETS,
-  '/api/v1/metrics': MOCK_METRICS,
+  '/api/v1/messages': currentMessages, 
+  '/api/v1/tickets': currentTickets,
+  '/api/v1/metrics': currentMetrics,
   '/api/v1/projects': currentProjects,
-  '/api/v1/tasks': MOCK_TASKS,
-  '/api/v1/auth/login': { accessToken: 'mock-access-token', refreshToken: 'mock-refresh-token', user: { id: 'u-123', name: 'Alex Founder' } },
+  '/api/v1/tasks': currentTasks,
   '/api/v1/orgs/org-1': currentOrg, 
   '/api/v1/orgs/org-1/modules': MOCK_MODULES,
-  '/api/v1/contacts': MOCK_CONTACTS,
+  '/api/v1/contacts': currentContacts,
   '/api/v1/communications/messages': MOCK_COMMUNICATION_HISTORY,
   '/api/v1/email/accounts': MOCK_EMAIL_ACCOUNTS,
   '/api/v1/users': currentUsers,
   '/api/v1/marketing/campaigns': currentCampaigns,
   '/api/v1/marketing/templates': MOCK_TEMPLATES,
   '/api/v1/notifications': currentNotifications
-};
+});
 
 // Helper to simulate token retrieval
 export const getAccessToken = () => localStorage.getItem('access_token') || 'mock-jwt-token';
@@ -54,8 +65,84 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
 
   console.log(`[API] ${options.method || 'GET'} ${path}`, { headers, body: options.body });
 
-  // 3. Strip query parameters for mock DB lookup (simplistic routing)
   const cleanPath = path.split('?')[0];
+  let MOCK_DB = updateMockDB();
+
+  // --- AUTH HANDLERS ---
+  if (path === '/api/v1/auth/login' && options.method === 'POST') {
+      const body = JSON.parse(options.body as string);
+      // For demo, if password is correct-ish
+      if (body.email) {
+          // If logging in as demo user, ensure some data exists (optional reset logic could go here)
+          return { accessToken: 'mock-access-token', user: currentUsers.find(u => u.email === body.email) || currentUsers[0] };
+      }
+      throw new Error("Invalid credentials");
+  }
+
+  if (path === '/api/v1/auth/signup' && options.method === 'POST') {
+      const body = JSON.parse(options.body as string);
+      
+      // 1. Create New Org
+      const newOrgId = `org-${Date.now()}`;
+      currentOrg = {
+          ...MOCK_ORG,
+          id: newOrgId,
+          name: 'My New Company', 
+          setupStatus: 'pending', 
+          plan: 'free',
+          limits: { ...MOCK_ORG.limits, staff: { current: 1, max: 1 } }
+      };
+      
+      // 2. Create Admin User
+      const newUserId = `u-${Date.now()}`;
+      const newUser: User = {
+          id: newUserId,
+          email: body.email,
+          fullName: body.fullName,
+          role: 'admin', 
+          orgId: newOrgId,
+          status: 'active'
+      };
+      
+      // 3. RESET DATA FOR NEW ACCOUNT
+      currentUsers = [newUser];
+      currentEmployees = [];
+      currentItems = [];
+      currentInvoices = [];
+      currentLeads = [];
+      currentQuotations = [];
+      currentProjects = [];
+      currentTasks = [];
+      currentExpenses = [];
+      currentCampaigns = [];
+      currentNotifications = []; // Clear notifications
+      currentMessages = [];
+      currentTickets = [];
+      currentContacts = [];
+      
+      // Reset Metrics
+      currentMetrics = {
+        totalRevenue: 0,
+        activeLeads: 0,
+        pendingInvoices: 0,
+        lowStockItems: 0,
+        revenueTrend: []
+      };
+
+      activeUserId = newUserId;
+      
+      return { accessToken: 'new-user-token', user: newUser };
+  }
+
+  // --- DYNAMIC DATA HANDLERS ---
+
+  if (path === '/api/v1/orgs/org-1') {
+      return currentOrg;
+  }
+
+  if (path === '/api/v1/users') {
+      return currentUsers;
+  }
 
   // --- MOCK LOGIC FOR INVENTORY ITEMS ---
   if (path === '/api/v1/items' && options.method === 'POST') {
@@ -71,7 +158,8 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
         reOrderLevel: Number(body.reOrderLevel || 10)
     };
     currentItems.push(newItem);
-    MOCK_DB['/api/v1/items'] = currentItems;
+    // Update metrics check
+    currentMetrics.lowStockItems = currentItems.filter(i => i.stockLevel <= i.reOrderLevel).length;
     return newItem;
   }
 
@@ -80,7 +168,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     const body = JSON.parse(options.body as string);
     const newInvoice: Invoice = {
         id: `inv-${Date.now()}`,
-        invoiceNumber: `INV-2024-${Math.floor(Math.random() * 1000)}`,
+        invoiceNumber: `INV-${new Date().getFullYear()}-${currentInvoices.length + 1}`,
         clientId: 'c-new',
         clientName: body.clientName,
         items: body.items,
@@ -89,7 +177,9 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
         dueDate: body.dueDate
     };
     currentInvoices.unshift(newInvoice);
-    MOCK_DB['/api/v1/invoices'] = currentInvoices;
+    // Update Metrics
+    currentMetrics.pendingInvoices = currentInvoices.filter(i => i.status === 'pending').length;
+    currentMetrics.totalRevenue += 0; // Only paid invoices count usually, but for mock simplicty
     return newInvoice;
   }
 
@@ -106,7 +196,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
         description: body.description
     };
     currentProjects.unshift(newProject);
-    MOCK_DB['/api/v1/projects'] = currentProjects;
     return newProject;
   }
 
@@ -121,7 +210,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
         date: new Date().toISOString().split('T')[0]
     };
     currentExpenses.unshift(newExpense);
-    MOCK_DB['/api/v1/expenses'] = currentExpenses;
     return newExpense;
   }
 
@@ -138,7 +226,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
       status: 'active'
     };
     currentEmployees.push(newEmployee);
-    MOCK_DB['/api/v1/employees'] = currentEmployees;
     return newEmployee;
   }
 
@@ -158,7 +245,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
       startDate: new Date().toISOString().split('T')[0]
     };
     currentCampaigns.unshift(newCampaign);
-    MOCK_DB['/api/v1/marketing/campaigns'] = currentCampaigns;
     return newCampaign;
   }
 
@@ -170,14 +256,12 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     } else {
         currentNotifications = currentNotifications.map(n => n.id === id ? {...n, read: true} : n);
     }
-    MOCK_DB['/api/v1/notifications'] = currentNotifications;
     return { success: true };
   }
 
   // --- MOCK LOGIC FOR SETUP WIZARD & RESET ---
   if (path === '/api/v1/setup/reset' && options.method === 'POST') {
     currentOrg = { ...MOCK_ORG, setupStatus: 'pending' };
-    MOCK_DB['/api/v1/orgs/org-1'] = currentOrg;
     return { success: true };
   }
 
@@ -191,7 +275,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
       industry: body.industry,
       taxNumber: body.taxNumber
     };
-    MOCK_DB['/api/v1/orgs/org-1'] = currentOrg;
     return { success: true };
   }
 
@@ -213,7 +296,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   if (path.startsWith('/api/v1/users') && options.method === 'DELETE') {
     const id = path.split('/').pop();
     currentUsers = currentUsers.filter(u => u.id !== id);
-    MOCK_DB['/api/v1/users'] = currentUsers;
     return { success: true };
   }
 
@@ -249,6 +331,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
         timestamp: new Date().toISOString(),
         status: 'sent'
     };
+    // If no contacts exist, maybe create one implicitly? For now, assume id matches.
     return newMessage;
   }
   
@@ -298,6 +381,9 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   if (options.method === 'POST' && path.includes('/enable')) {
     return { success: true };
   }
+
+  // Update MOCK_DB before checking path
+  MOCK_DB = updateMockDB();
 
   if (MOCK_DB[cleanPath]) {
     return MOCK_DB[cleanPath];

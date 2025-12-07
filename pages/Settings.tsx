@@ -3,7 +3,7 @@ import { apiFetch } from '../lib/api';
 import { Module, Organization, SubscriptionPlan, AddOn, User } from '../types';
 import { SUBSCRIPTION_PLANS, AVAILABLE_ADDONS } from '../constants';
 
-export const Settings: React.FC = () => {
+export const Upgrade: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'billing' | 'team'>('billing');
   const [modules, setModules] = useState<Module[]>([]);
   const [org, setOrg] = useState<Organization | null>(null);
@@ -141,7 +141,7 @@ export const Settings: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="text-center py-20 text-slate-400">Loading settings...</div>;
+  if (loading) return <div className="text-center py-20 text-slate-400">Loading upgrade options...</div>;
 
   // SUBSCRIPTION ENFORCEMENT LOGIC
   const staffLimit = org?.limits.staff.max || 1;
@@ -151,30 +151,30 @@ export const Settings: React.FC = () => {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       
-      {/* Settings Navigation */}
+      {/* Navigation */}
       <div className="flex justify-between items-center border-b border-slate-200">
          <div>
-            <h2 className="text-2xl font-bold text-slate-900">Settings</h2>
-            <p className="text-slate-500 mb-4">Manage your organization, billing, and modules.</p>
+            <h2 className="text-2xl font-bold text-slate-900">Upgrade Plan</h2>
+            <p className="text-slate-500 mb-4">Choose a plan that fits your business needs.</p>
          </div>
          <nav className="flex space-x-6">
             <button 
-              onClick={() => setActiveTab('profile')}
-              className={`pb-4 font-medium text-sm ${activeTab === 'profile' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
+              onClick={() => setActiveTab('billing')}
+              className={`pb-4 font-medium text-sm ${activeTab === 'billing' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
             >
-              Profile & Modules
+              Plans & Billing
+            </button>
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className={`pb-4 font-medium text-sm ${activeTab === 'profile' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              Modules & Settings
             </button>
             <button 
               onClick={() => setActiveTab('team')}
-              className={`pb-4 font-medium text-sm ${activeTab === 'team' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`pb-4 font-medium text-sm ${activeTab === 'team' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
             >
               Team & Roles
-            </button>
-            <button 
-              onClick={() => setActiveTab('billing')}
-              className={`pb-4 font-medium text-sm ${activeTab === 'billing' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              Billing & Plans
             </button>
          </nav>
       </div>
@@ -196,7 +196,7 @@ export const Settings: React.FC = () => {
         <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
             <h3 className="text-lg font-bold text-slate-900">Organization Profile</h3>
-            <button onClick={openEditOrgModal} className="text-indigo-600 text-sm font-medium hover:underline">Edit Details</button>
+            <button onClick={openEditOrgModal} className="text-blue-900 text-sm font-medium hover:underline">Edit Details</button>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -225,23 +225,23 @@ export const Settings: React.FC = () => {
         {/* Module Marketplace */}
         <section>
           <div className="mb-4">
-            <h3 className="text-lg font-bold text-slate-900">WorkCore Modules</h3>
+            <h3 className="text-lg font-bold text-slate-900">OMMI Modules</h3>
             <p className="text-sm text-slate-500">Enable or disable microservices for your organization.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {modules.map(mod => (
               <div key={mod.id} className={`flex flex-col rounded-xl border p-6 transition-all ${
-                mod.enabled ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-75 grayscale-[0.5]'
+                mod.enabled ? 'bg-white border-blue-200 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-75 grayscale-[0.5]'
               }`}>
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`p-2 rounded-lg ${mod.enabled ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-200 text-slate-500'}`}>
+                  <div className={`p-2 rounded-lg ${mod.enabled ? 'bg-blue-50 text-blue-900' : 'bg-slate-200 text-slate-500'}`}>
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                   </div>
                   <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                       <button 
                         onClick={() => toggleModule(mod.id, mod.enabled)}
-                        className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${mod.enabled ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                        className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${mod.enabled ? 'bg-blue-900' : 'bg-slate-300'}`}
                       >
                         <span className={`block h-6 w-6 rounded-full bg-white shadow transform transition-transform ${mod.enabled ? 'translate-x-4' : 'translate-x-0'}`}></span>
                       </button>
@@ -272,7 +272,7 @@ export const Settings: React.FC = () => {
                 <button 
                   onClick={() => setShowInviteModal(true)}
                   disabled={isStaffLimitReached}
-                  className={`bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all ${isStaffLimitReached ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'}`}
+                  className={`bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all ${isStaffLimitReached ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-800'}`}
                 >
                   + Invite User
                 </button>
@@ -298,7 +298,7 @@ export const Settings: React.FC = () => {
                     <tr key={user.id} className="hover:bg-slate-50">
                        <td className="px-6 py-4">
                           <div className="flex items-center">
-                             <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs mr-3">
+                             <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center font-bold text-xs mr-3">
                                 {user.fullName[0]}
                              </div>
                              <div>
@@ -343,7 +343,7 @@ export const Settings: React.FC = () => {
              <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">Current Usage</h3>
-                  <p className="text-sm text-slate-500">Plan: <span className="font-bold uppercase text-indigo-600">{org?.plan}</span></p>
+                  <p className="text-sm text-slate-500">Plan: <span className="font-bold uppercase text-blue-900">{org?.plan}</span></p>
                 </div>
                 {org?.plan === 'free' && (
                   <div className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-medium">
@@ -361,7 +361,7 @@ export const Settings: React.FC = () => {
                    </div>
                    <div className="w-full bg-slate-100 rounded-full h-2">
                       <div 
-                        className={`h-2 rounded-full ${org?.limits.contacts.current! >= org?.limits.contacts.max! ? 'bg-red-500' : 'bg-indigo-600'}`} 
+                        className={`h-2 rounded-full ${org?.limits.contacts.current! >= org?.limits.contacts.max! ? 'bg-red-500' : 'bg-blue-900'}`} 
                         style={{ width: org?.limits.contacts.max === -1 ? '5%' : `${(org?.limits.contacts.current! / org?.limits.contacts.max!) * 100}%` }}
                       ></div>
                    </div>
@@ -402,8 +402,8 @@ export const Settings: React.FC = () => {
             <h3 className="text-lg font-bold text-slate-900 mb-6">Subscription Plans</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                {SUBSCRIPTION_PLANS.map(plan => (
-                  <div key={plan.id} className={`bg-white rounded-xl p-6 border flex flex-col ${plan.recommended ? 'border-indigo-500 shadow-md ring-1 ring-indigo-500 relative' : 'border-slate-200'}`}>
-                     {plan.recommended && <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">Most Popular</span>}
+                  <div key={plan.id} className={`bg-white rounded-xl p-6 border flex flex-col ${plan.recommended ? 'border-blue-500 shadow-md ring-1 ring-blue-500 relative' : 'border-slate-200'}`}>
+                     {plan.recommended && <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-900 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">Most Popular</span>}
                      <h4 className="font-bold text-slate-900 text-lg">{plan.name}</h4>
                      <div className="my-4">
                         <span className="text-3xl font-bold text-slate-900">{plan.price === 0 ? 'Free' : plan.price.toLocaleString()}</span>
@@ -420,7 +420,7 @@ export const Settings: React.FC = () => {
                      <button 
                        onClick={() => plan.price > 0 && initiatePayment('plan', plan)}
                        disabled={org?.plan === plan.id}
-                       className={`w-full py-2 rounded-lg text-sm font-bold transition-colors ${org?.plan === plan.id ? 'bg-slate-100 text-slate-400 cursor-default' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                       className={`w-full py-2 rounded-lg text-sm font-bold transition-colors ${org?.plan === plan.id ? 'bg-slate-100 text-slate-400 cursor-default' : 'bg-blue-900 text-white hover:bg-blue-800'}`}
                      >
                        {org?.plan === plan.id ? 'Current Plan' : plan.price === 0 ? 'Downgrade' : 'Upgrade'}
                      </button>
@@ -449,7 +449,7 @@ export const Settings: React.FC = () => {
                           ) : (
                             <button 
                               onClick={() => initiatePayment('addon', addon)}
-                              className="text-xs bg-white border border-indigo-600 text-indigo-600 px-3 py-1.5 rounded font-medium hover:bg-indigo-50"
+                              className="text-xs bg-white border border-blue-900 text-blue-900 px-3 py-1.5 rounded font-medium hover:bg-blue-50"
                             >
                                Buy Now
                             </button>
@@ -475,7 +475,7 @@ export const Settings: React.FC = () => {
                       type="email" 
                       value={newUserEmail} 
                       onChange={e => setNewUserEmail(e.target.value)} 
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-900" 
                     />
                  </div>
                  <div>
@@ -493,7 +493,7 @@ export const Settings: React.FC = () => {
               </div>
               <div className="mt-6 flex justify-end space-x-3">
                  <button onClick={() => setShowInviteModal(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancel</button>
-                 <button onClick={handleInviteUser} className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg">Send Invitation</button>
+                 <button onClick={handleInviteUser} className="px-4 py-2 bg-blue-900 text-white font-medium hover:bg-blue-800 rounded-lg">Send Invitation</button>
               </div>
            </div>
         </div>
@@ -511,7 +511,7 @@ export const Settings: React.FC = () => {
                       type="text" 
                       value={editOrgName} 
                       onChange={e => setEditOrgName(e.target.value)} 
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-900" 
                     />
                  </div>
                  <div>
@@ -520,13 +520,13 @@ export const Settings: React.FC = () => {
                       type="text" 
                       value={editOrgPhone} 
                       onChange={e => setEditOrgPhone(e.target.value)} 
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" 
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-900" 
                     />
                  </div>
               </div>
               <div className="mt-6 flex justify-end space-x-3">
                  <button onClick={() => setShowEditOrgModal(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancel</button>
-                 <button onClick={handleSaveOrg} className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg">Save Changes</button>
+                 <button onClick={handleSaveOrg} className="px-4 py-2 bg-blue-900 text-white font-medium hover:bg-blue-800 rounded-lg">Save Changes</button>
               </div>
            </div>
         </div>
@@ -550,7 +550,7 @@ export const Settings: React.FC = () => {
                        <h4 className="text-xl font-bold text-slate-900">{selectedItem.item.name}</h4>
                     </div>
                     <div className="text-right">
-                       <span className="block text-xl font-bold text-indigo-600">{selectedItem.item.price.toLocaleString()}</span>
+                       <span className="block text-xl font-bold text-blue-900">{selectedItem.item.price.toLocaleString()}</span>
                        <span className="text-xs text-slate-500 uppercase">{selectedItem.item.currency}</span>
                     </div>
                  </div>

@@ -21,7 +21,7 @@ const NavItem: React.FC<{
     onClick={onClick}
     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
       active 
-        ? 'bg-indigo-600 text-white shadow-md' 
+        ? 'bg-blue-900 text-white shadow-md' 
         : 'text-slate-400 hover:bg-slate-800 hover:text-white'
     }`}
   >
@@ -40,7 +40,7 @@ const Icons = {
   Operations: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>,
   Comms: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
   Marketing: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>,
-  Settings: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+  Upgrade: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
   Logout: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
 };
 
@@ -80,7 +80,8 @@ export const Layout: React.FC<LayoutProps> = ({
   const canViewFinance = isAdmin || isManager;
   const canViewHR = isAdmin || isManager;
   const canViewMarketing = isAdmin || isManager;
-  const canViewSettings = isAdmin;
+  // Upgrade is visible to all, but Admin has full control
+  const canUpgrade = true;
 
   const isSalesActive = currentNav.view === ViewState.SALES || currentNav.view === ViewState.INVOICE_DETAIL;
   const isInventoryActive = currentNav.view === ViewState.INVENTORY || currentNav.view === ViewState.INVENTORY_DETAIL;
@@ -90,10 +91,10 @@ export const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex md:flex-col w-64 bg-slate-900 text-white shadow-xl z-20">
+      <aside className="hidden md:flex md:flex-col w-64 bg-slate-950 text-white shadow-xl z-20">
         <div className="p-6 border-b border-slate-800">
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-            WorkCore
+          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+            OMMI
           </h1>
           <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider">{org.name}</p>
         </div>
@@ -159,16 +160,14 @@ export const Layout: React.FC<LayoutProps> = ({
             onClick={() => handleNav(ViewState.COMMS)} 
           />
           
-          {canViewSettings && (
-            <div className="pt-4 mt-4 border-t border-slate-800">
-              <NavItem 
-                label="Settings" 
-                active={currentNav.view === ViewState.SETTINGS} 
-                icon={<Icons.Settings />} 
-                onClick={() => handleNav(ViewState.SETTINGS)} 
-              />
-            </div>
-          )}
+          <div className="pt-4 mt-4 border-t border-slate-800">
+            <NavItem 
+              label="Upgrade Plan" 
+              active={currentNav.view === ViewState.UPGRADE} 
+              icon={<Icons.Upgrade />} 
+              onClick={() => handleNav(ViewState.UPGRADE)} 
+            />
+          </div>
         </nav>
 
         <div className="p-4 border-t border-slate-800">
@@ -186,7 +185,7 @@ export const Layout: React.FC<LayoutProps> = ({
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 z-10">
-          <h1 className="text-lg font-bold text-slate-900">WorkCore</h1>
+          <h1 className="text-lg font-bold text-slate-900">OMMI</h1>
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-600">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -221,7 +220,7 @@ export const Layout: React.FC<LayoutProps> = ({
                         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                            <h3 className="font-bold text-slate-900">Notifications</h3>
                            {unreadCount > 0 && (
-                             <button onClick={markAllRead} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Mark all read</button>
+                             <button onClick={markAllRead} className="text-xs text-blue-800 hover:text-blue-900 font-medium">Mark all read</button>
                            )}
                         </div>
                         <div className="max-h-80 overflow-y-auto">
@@ -229,7 +228,7 @@ export const Layout: React.FC<LayoutProps> = ({
                              <div className="p-8 text-center text-slate-400 text-sm">No notifications</div>
                            ) : (
                              notifications.map(notif => (
-                               <div key={notif.id} className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors ${!notif.read ? 'bg-indigo-50/50' : ''}`}>
+                               <div key={notif.id} className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors ${!notif.read ? 'bg-blue-50/50' : ''}`}>
                                   <div className="flex items-start space-x-3">
                                      <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
                                         notif.type === 'error' ? 'bg-red-500' : 
@@ -257,7 +256,7 @@ export const Layout: React.FC<LayoutProps> = ({
                     <p className="text-sm font-medium text-slate-900">{user.fullName}</p>
                     <p className="text-xs text-slate-500 capitalize">{user.role}</p>
                  </div>
-                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold border-2 border-white shadow-sm">
+                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 font-bold border-2 border-white shadow-sm">
                     {user.fullName.charAt(0)}
                  </div>
               </div>
@@ -288,6 +287,11 @@ export const Layout: React.FC<LayoutProps> = ({
               {canViewMarketing && <NavItem label="Marketing" active={currentNav.view === ViewState.MARKETING} icon={<Icons.Marketing />} onClick={() => handleNav(ViewState.MARKETING)} />}
 
               <NavItem label="Comms" active={currentNav.view === ViewState.COMMS} icon={<Icons.Comms />} onClick={() => handleNav(ViewState.COMMS)} />
+              
+              <div className="border-t border-slate-700 pt-4 mt-4">
+                <NavItem label="Upgrade Plan" active={currentNav.view === ViewState.UPGRADE} icon={<Icons.Upgrade />} onClick={() => handleNav(ViewState.UPGRADE)} />
+              </div>
+
               <button onClick={onLogout} className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 mt-8">
                 <Icons.Logout />
                 <span>Sign Out</span>
