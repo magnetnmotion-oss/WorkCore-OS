@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ViewState, User, Organization, NavigationState, Notification } from '../types';
 import { apiFetch } from '../lib/api';
+import { Logo } from './Logo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,14 +20,14 @@ const NavItem: React.FC<{
 }> = ({ label, active, icon, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
       active 
-        ? 'bg-blue-900 text-white shadow-md' 
-        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+        ? 'bg-orange-600 text-white shadow-md font-semibold' 
+        : 'text-slate-400 hover:bg-white/10 hover:text-white'
     }`}
   >
     {icon}
-    <span className="font-medium text-sm">{label}</span>
+    <span className="text-sm">{label}</span>
   </button>
 );
 
@@ -91,12 +92,12 @@ export const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex md:flex-col w-64 bg-slate-950 text-white shadow-xl z-20">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-            OMMI
-          </h1>
-          <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider">{org.name}</p>
+      <aside className="hidden md:flex md:flex-col w-64 bg-[#0f172a] text-white shadow-xl z-20">
+        <div className="p-6 border-b border-white/10">
+          <div className="mb-2">
+             <Logo className="h-8 w-auto" variant="light" />
+          </div>
+          <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold opacity-70">{org.name}</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -160,7 +161,7 @@ export const Layout: React.FC<LayoutProps> = ({
             onClick={() => handleNav(ViewState.COMMS)} 
           />
           
-          <div className="pt-4 mt-4 border-t border-slate-800">
+          <div className="pt-4 mt-4 border-t border-white/10">
             <NavItem 
               label="Upgrade Plan" 
               active={currentNav.view === ViewState.UPGRADE} 
@@ -170,10 +171,10 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-white/10">
           <button 
             onClick={onLogout}
-            className="flex items-center space-x-2 text-xs text-slate-400 hover:text-white transition-colors w-full"
+            className="flex items-center space-x-2 text-xs text-slate-400 hover:text-white transition-colors w-full px-4 py-2 hover:bg-white/5 rounded-lg"
           >
             <Icons.Logout />
             <span>Sign Out</span>
@@ -184,9 +185,11 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         {/* Mobile Header */}
-        <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 z-10">
-          <h1 className="text-lg font-bold text-slate-900">OMMI</h1>
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-600">
+        <header className="md:hidden flex items-center justify-between p-4 bg-[#0f172a] text-white border-b border-slate-700 z-10">
+          <div className="h-6">
+             <Logo className="h-full w-auto" variant="light" />
+          </div>
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-300 hover:text-white">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -265,7 +268,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute inset-0 bg-slate-900 z-50 p-4">
+          <div className="md:hidden absolute inset-0 bg-[#0f172a] z-50 p-4">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-white text-xl font-bold">Menu</h2>
               <button onClick={() => setMobileMenuOpen(false)} className="text-white">
@@ -288,11 +291,11 @@ export const Layout: React.FC<LayoutProps> = ({
 
               <NavItem label="Comms" active={currentNav.view === ViewState.COMMS} icon={<Icons.Comms />} onClick={() => handleNav(ViewState.COMMS)} />
               
-              <div className="border-t border-slate-700 pt-4 mt-4">
+              <div className="border-t border-white/10 pt-4 mt-4">
                 <NavItem label="Upgrade Plan" active={currentNav.view === ViewState.UPGRADE} icon={<Icons.Upgrade />} onClick={() => handleNav(ViewState.UPGRADE)} />
               </div>
 
-              <button onClick={onLogout} className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 mt-8">
+              <button onClick={onLogout} className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 mt-8 hover:bg-white/5 rounded-lg">
                 <Icons.Logout />
                 <span>Sign Out</span>
               </button>

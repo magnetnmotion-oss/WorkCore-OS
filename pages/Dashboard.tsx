@@ -10,6 +10,28 @@ interface DashboardProps {
   onNavigate: (view: ViewState, data?: any) => void;
 }
 
+type TimeRange = 'weekly' | 'monthly' | 'yearly';
+
+// Mock data for ranges that aren't provided by the main API endpoint yet
+const EXTRA_RANGE_DATA = {
+  weekly: [
+    { label: 'Mon', amount: 45000 },
+    { label: 'Tue', amount: 52000 },
+    { label: 'Wed', amount: 49000 },
+    { label: 'Thu', amount: 62000 },
+    { label: 'Fri', amount: 68000 },
+    { label: 'Sat', amount: 74000 },
+    { label: 'Sun', amount: 55000 },
+  ],
+  yearly: [
+    { label: '2020', amount: 850000 },
+    { label: '2021', amount: 980000 },
+    { label: '2022', amount: 1200000 },
+    { label: '2023', amount: 1450000 },
+    { label: '2024', amount: 1680000 },
+  ]
+};
+
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [metrics, setMetrics] = useState<BusinessMetrics>(MOCK_METRICS);
@@ -21,6 +43,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
   const [loading, setLoading] = useState(true);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  
+  // New state for chart filtering
+  const [timeRange, setTimeRange] = useState<TimeRange>('monthly');
 
   // Check if account is fresh (no revenue, no invoices)
   const isFreshAccount = metrics.totalRevenue === 0 && recentInvoices.length === 0 && lowStockItems.length === 0;
@@ -77,6 +102,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Determine chart data based on selection
+  const getChartData = () => {
+    if (timeRange === 'weekly') return EXTRA_RANGE_DATA.weekly;
+    if (timeRange === 'yearly') return EXTRA_RANGE_DATA.yearly;
+    // Default to monthly (from API)
+    return metrics.revenueTrend.map(d => ({ label: d.month, amount: d.amount }));
+  };
+
   if (loading) {
     return <div className="py-20 text-center text-slate-400">Loading dashboard...</div>;
   }
@@ -84,322 +117,244 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   // --- EMPTY STATE DASHBOARD FOR NEW USERS ---
   if (isFreshAccount) {
     return (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-8 animate-fade-in p-8 rounded-3xl bg-gradient-to-r from-orange-500 to-amber-500 min-h-[80vh] shadow-xl">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900">Welcome to OMMI! 👋</h2>
-          <p className="text-slate-500 mt-2 text-lg">Your operating system is ready. Start by adding your business data.</p>
+          <h2 className="text-3xl font-bold text-white drop-shadow-sm">Welcome to OMMI! 👋</h2>
+          <p className="text-white/90 mt-2 text-lg">Your operating system is ready. Start by adding your business data.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <button 
             onClick={() => onNavigate(ViewState.SALES)}
-            className="group p-6 bg-white rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+            className="group p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all text-left transform hover:-translate-y-1"
           >
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
-            <h3 className="font-bold text-slate-900 text-lg group-hover:text-blue-700">Add First Sale</h3>
-            <p className="text-sm text-slate-500 mt-1">Create an invoice or record a cash sale to start tracking revenue.</p>
+            <h3 className="font-bold text-slate-900 text-lg">Sales & Invoicing</h3>
+            <p className="text-slate-500 text-sm mt-1">Create your first invoice and track revenue.</p>
+            <span className="text-blue-600 text-sm font-bold mt-4 block group-hover:underline">Get Started &rarr;</span>
           </button>
 
           <button 
             onClick={() => onNavigate(ViewState.INVENTORY)}
-            className="group p-6 bg-white rounded-xl border-2 border-dashed border-slate-200 hover:border-green-500 hover:bg-green-50 transition-all text-left"
+            className="group p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all text-left transform hover:-translate-y-1"
           >
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
             </div>
-            <h3 className="font-bold text-slate-900 text-lg group-hover:text-green-700">Add Inventory</h3>
-            <p className="text-sm text-slate-500 mt-1">List your products or services to manage stock levels.</p>
+            <h3 className="font-bold text-slate-900 text-lg">Inventory</h3>
+            <p className="text-slate-500 text-sm mt-1">Add products and manage stock levels.</p>
+            <span className="text-purple-600 text-sm font-bold mt-4 block group-hover:underline">Add Items &rarr;</span>
           </button>
 
           <button 
             onClick={() => onNavigate(ViewState.HR)}
-            className="group p-6 bg-white rounded-xl border-2 border-dashed border-slate-200 hover:border-purple-500 hover:bg-purple-50 transition-all text-left"
+            className="group p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all text-left transform hover:-translate-y-1"
           >
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-4 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             </div>
-            <h3 className="font-bold text-slate-900 text-lg group-hover:text-purple-700">Add Employee</h3>
-            <p className="text-sm text-slate-500 mt-1">Register your team members to manage payroll and HR.</p>
-          </button>
-
-          <button 
-            onClick={() => onNavigate(ViewState.OPERATIONS)}
-            className="group p-6 bg-white rounded-xl border-2 border-dashed border-slate-200 hover:border-amber-500 hover:bg-amber-50 transition-all text-left"
-          >
-            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-4 group-hover:scale-110 transition-transform">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
-            </div>
-            <h3 className="font-bold text-slate-900 text-lg group-hover:text-amber-700">Create Project</h3>
-            <p className="text-sm text-slate-500 mt-1">Start a new project or task to organize operations.</p>
-          </button>
-
-          <button 
-            onClick={() => onNavigate(ViewState.COMMS)}
-            className="group p-6 bg-white rounded-xl border-2 border-dashed border-slate-200 hover:border-cyan-500 hover:bg-cyan-50 transition-all text-left"
-          >
-            <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 mb-4 group-hover:scale-110 transition-transform">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-            </div>
-            <h3 className="font-bold text-slate-900 text-lg group-hover:text-cyan-700">Connect Channels</h3>
-            <p className="text-sm text-slate-500 mt-1">Link your Email or WhatsApp to start communicating.</p>
+            <h3 className="font-bold text-slate-900 text-lg">Team & HR</h3>
+            <p className="text-slate-500 text-sm mt-1">Add employees and manage payroll.</p>
+            <span className="text-green-600 text-sm font-bold mt-4 block group-hover:underline">Add Team &rarr;</span>
           </button>
         </div>
       </div>
     );
   }
 
+  // --- MAIN DASHBOARD VIEW ---
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
-          <p className="text-slate-500">Welcome back, here's what's happening today.</p>
-        </div>
-        <div className="mt-4 md:mt-0">
-          <button 
-            onClick={() => fetchInsights(metrics)}
-            disabled={loadingInsights}
-            className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors disabled:opacity-50"
-          >
-             {loadingInsights ? (
-               <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-             ) : (
-               <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-             )}
-             {loadingInsights ? 'Analyzing...' : 'Refresh Insights'}
-          </button>
-        </div>
-      </div>
-
-      {/* Top Level Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Revenue" 
-          value={`KES ${metrics.totalRevenue.toLocaleString()}`} 
-          trend="12.5%" 
-          trendUp={true}
-          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-        />
-        <StatCard 
-          title="Active Leads" 
-          value={metrics.activeLeads} 
-          trend="4.2%" 
-          trendUp={true}
-          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
-        />
-        <StatCard 
-          title="Pending Invoices" 
-          value={metrics.pendingInvoices} 
-          trend="2.1%" 
-          trendUp={false}
-          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-        />
-        <StatCard 
-          title="Low Stock Items" 
-          value={metrics.lowStockItems} 
-          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>}
-        />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Revenue Analytics (KES)</h3>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={metrics.revenueTrend}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1e40af" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#1e40af" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
-                <Tooltip 
-                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} 
-                  formatter={(value: number) => [`KES ${value.toLocaleString()}`, 'Revenue']}
-                />
-                <Area type="monotone" dataKey="amount" stroke="#1e40af" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Insights Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="p-1.5 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-md">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            </div>
-            <h3 className="text-lg font-bold text-slate-900">Automated Insights</h3>
-          </div>
-          
-          <div className="space-y-4">
-            {insights.length === 0 && !loadingInsights && (
-               <div className="text-center py-8 text-slate-400">
-                 <p>No new insights generated yet.</p>
-               </div>
-            )}
-            
-            {loadingInsights ? (
-              <div className="space-y-4 animate-pulse">
-                <div className="h-24 bg-slate-100 rounded-lg"></div>
-                <div className="h-24 bg-slate-100 rounded-lg"></div>
-              </div>
-            ) : (
-              insights.map((insight) => (
-                <div key={insight.id} className={`p-4 rounded-lg border-l-4 ${
-                  insight.type === 'opportunity' ? 'bg-green-50 border-green-500' :
-                  insight.type === 'risk' ? 'bg-amber-50 border-amber-500' :
-                  'bg-blue-50 border-blue-600'
-                }`}>
-                  <h4 className={`text-sm font-bold ${
-                    insight.type === 'opportunity' ? 'text-green-800' :
-                    insight.type === 'risk' ? 'text-amber-800' :
-                    'text-blue-800'
-                  }`}>{insight.title}</h4>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    {insight.description}
-                  </p>
-                  {insight.actionable && (
-                    <button className="mt-2 text-xs font-semibold underline opacity-80 hover:opacity-100">
-                      View Details →
-                    </button>
-                  )}
+      <div className="space-y-8 animate-fade-in pb-8">
+        {/* OVERVIEW SECTION - ORANGE GRADIENT BACKGROUND */}
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-8 text-white shadow-xl">
+            <div className="flex justify-between items-start mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold mb-2">Overview</h1>
+                    <p className="text-white/90 text-lg">Welcome back, here's what's happening today.</p>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+                <button 
+                  onClick={() => fetchInsights(metrics)}
+                  disabled={loadingInsights}
+                  className="bg-blue-900 hover:bg-blue-800 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg flex items-center disabled:opacity-70 border border-blue-700"
+                >
+                  {loadingInsights ? (
+                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  ) : (
+                     <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  )}
+                  Refresh Insights
+                </button>
+            </div>
 
-      {/* Detailed Snapshots Grid */}
-      <h3 className="text-xl font-bold text-slate-900 pt-4">Recent Activity</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Sales Snapshot */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-           <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-900">Recent Invoices</h3>
-              <button onClick={() => onNavigate(ViewState.SALES)} className="text-sm text-blue-800 font-medium hover:underline">View All</button>
-           </div>
-           <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                 <thead>
-                    <tr className="text-slate-500 border-b border-slate-100">
-                       <th className="pb-2 font-medium">Invoice</th>
-                       <th className="pb-2 font-medium">Client</th>
-                       <th className="pb-2 font-medium text-right">Amount</th>
-                    </tr>
-                 </thead>
-                 <tbody className="divide-y divide-slate-50">
-                    {recentInvoices.map(inv => (
-                       <tr 
-                         key={inv.id} 
-                         onClick={() => onNavigate(ViewState.INVOICE_DETAIL, inv.id)}
-                         className="cursor-pointer hover:bg-slate-50 transition-colors"
-                       >
-                          <td className="py-2.5 font-medium text-slate-900">{inv.invoiceNumber}</td>
-                          <td className="py-2.5 text-slate-500">{inv.clientName}</td>
-                          <td className="py-2.5 text-right font-medium text-slate-900">KES {inv.total.toLocaleString()}</td>
-                       </tr>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard 
+                  title="Total Revenue" 
+                  value={`KES ${metrics.totalRevenue.toLocaleString()}`} 
+                  trend="12.5%" 
+                  trendUp={true} 
+                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                  variant="glass"
+                />
+                <StatCard 
+                  title="Active Leads" 
+                  value={metrics.activeLeads} 
+                  trend="4.2%" 
+                  trendUp={true} 
+                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
+                  variant="glass"
+                />
+                <StatCard 
+                  title="Pending Invoices" 
+                  value={metrics.pendingInvoices} 
+                  trend="2.1%" 
+                  trendUp={false} 
+                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+                  variant="glass"
+                />
+                <StatCard 
+                  title="Low Stock Items" 
+                  value={metrics.lowStockItems} 
+                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>}
+                  variant="glass"
+                />
+            </div>
+        </div>
+
+        {/* REST OF DASHBOARD - WHITE CARDS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Revenue Analytics */}
+            <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                  <h3 className="text-lg font-bold text-slate-900">Revenue Analytics (KES)</h3>
+                  <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                    {['Weekly', 'Monthly', 'Yearly'].map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setTimeRange(range.toLowerCase() as TimeRange)}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                          timeRange === range.toLowerCase() 
+                            ? 'bg-white text-slate-900 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {range}
+                      </button>
                     ))}
-                    {recentInvoices.length === 0 && (
-                      <tr><td colSpan={3} className="py-4 text-center text-slate-400">No recent invoices</td></tr>
+                  </div>
+                </div>
+                
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={getChartData()}>
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        formatter={(val: number) => `KES ${val.toLocaleString()}`}
+                      />
+                      <Area type="monotone" dataKey="amount" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* AI Insights */}
+            <div className="bg-[#fffbeb] p-6 rounded-2xl border border-orange-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <svg className="w-32 h-32 text-orange-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
+                    <span className="bg-orange-500 text-white p-1.5 rounded-lg mr-2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    </span>
+                    Automated Insights
+                </h3>
+                
+                <div className="space-y-4 relative z-10">
+                    {insights.length > 0 ? (
+                        insights.map(insight => (
+                            <div key={insight.id} className="bg-white p-4 rounded-xl shadow-sm border border-orange-100">
+                                <h4 className="font-bold text-slate-800 text-sm mb-1">{insight.title}</h4>
+                                <p className="text-xs text-slate-600 leading-relaxed">{insight.description}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-8 text-slate-500 text-sm">
+                           Click "Refresh Insights" to generate AI-powered analysis of your business performance.
+                        </div>
                     )}
-                 </tbody>
-              </table>
-           </div>
+                </div>
+            </div>
         </div>
 
-        {/* Inventory Snapshot */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-           <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-900">Inventory Alerts</h3>
-              <button onClick={() => onNavigate(ViewState.INVENTORY)} className="text-sm text-blue-800 font-medium hover:underline">Manage</button>
-           </div>
-           <ul className="space-y-3">
-              {lowStockItems.length === 0 ? (
-                <li className="text-sm text-slate-400 py-2">Stock levels are healthy.</li>
-              ) : lowStockItems.map(item => (
-                 <li 
-                   key={item.id} 
-                   onClick={() => onNavigate(ViewState.INVENTORY_DETAIL, item.id)}
-                   className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
-                 >
-                    <div>
-                      <span className="block text-slate-700 font-medium">{item.name}</span>
-                      <span className="text-xs text-slate-500">{item.sku}</span>
-                    </div>
-                    <span className="text-red-700 font-bold bg-red-100 px-2.5 py-1 rounded-md text-xs">{item.stockLevel} left</span>
-                 </li>
-              ))}
-           </ul>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Recent Invoices */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-slate-900">Recent Invoices</h3>
+                    <button onClick={() => onNavigate(ViewState.SALES)} className="text-blue-600 text-sm font-medium hover:underline">View All</button>
+                </div>
+                <div className="space-y-4">
+                    {recentInvoices.map(inv => (
+                        <div key={inv.id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer" onClick={() => onNavigate(ViewState.INVOICE_DETAIL, inv.id)}>
+                            <div className="flex items-center space-x-3">
+                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-sm text-slate-900">{inv.clientName}</p>
+                                    <p className="text-xs text-slate-500">{inv.invoiceNumber}</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="font-bold text-sm text-slate-900">KES {inv.total.toLocaleString()}</p>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{inv.status}</span>
+                            </div>
+                        </div>
+                    ))}
+                    {recentInvoices.length === 0 && <p className="text-slate-400 text-sm text-center py-4">No invoices found.</p>}
+                </div>
+            </div>
 
-         {/* Tasks Snapshot */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-           <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-900">Pending Priority Tasks</h3>
-              <button onClick={() => onNavigate(ViewState.OPERATIONS)} className="text-sm text-blue-800 font-medium hover:underline">Operations Board</button>
-           </div>
-            <ul className="space-y-4">
-              {pendingTasks.length === 0 ? (
-                 <li className="text-sm text-slate-400">No pending high priority tasks.</li>
-              ) : pendingTasks.map(task => (
-                 <li 
-                   key={task.id} 
-                   onClick={() => onNavigate(ViewState.OPERATIONS)}
-                   className="flex items-start space-x-3 text-sm cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors"
-                 >
-                    <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
-                    <div className="flex-1 min-w-0">
-                       <p className="text-slate-900 font-medium truncate">{task.title}</p>
-                       <p className="text-xs text-slate-500">Due {task.dueDate} • {task.assignedTo}</p>
-                    </div>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wide ${task.priority === 'high' ? 'bg-red-50 text-red-600' : 'bg-yellow-50 text-yellow-600'}`}>{task.priority}</span>
-                 </li>
-              ))}
-           </ul>
-        </div>
-
-         {/* Messages Snapshot */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-           <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-900">Latest Messages</h3>
-              <button onClick={() => onNavigate(ViewState.COMMS)} className="text-sm text-blue-800 font-medium hover:underline">Inbox</button>
-           </div>
-            <div className="space-y-4">
-              {recentMessages.length === 0 ? (
-                 <p className="text-sm text-slate-400">Inbox is empty.</p>
-              ) : recentMessages.map(msg => (
-                 <div 
-                   key={msg.id} 
-                   onClick={() => onNavigate(ViewState.COMMS)}
-                   className="flex items-start space-x-3 text-sm cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors"
-                 >
-                    <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full ${msg.channel === 'WhatsApp' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-                       <span className="text-[10px] font-bold uppercase">{msg.channel[0]}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                       <div className="flex justify-between items-baseline">
-                          <p className={`font-medium truncate ${msg.unread ? 'text-slate-900' : 'text-slate-600'}`}>{msg.sender}</p>
-                          <span className="text-xs text-slate-400 flex-shrink-0 ml-2">{msg.time}</span>
-                       </div>
-                       <p className={`text-xs truncate ${msg.unread ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>{msg.preview}</p>
-                    </div>
-                 </div>
-              ))}
-           </div>
+            {/* Low Stock Alerts */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-slate-900">Inventory Alerts</h3>
+                    <button onClick={() => onNavigate(ViewState.INVENTORY)} className="text-blue-600 text-sm font-medium hover:underline">Manage Stock</button>
+                </div>
+                <div className="space-y-3">
+                    {lowStockItems.map(item => (
+                        <div key={item.id} className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer" onClick={() => onNavigate(ViewState.INVENTORY_DETAIL, item.id)}>
+                            <div className="flex items-center space-x-3">
+                                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                <div>
+                                    <p className="font-bold text-sm text-slate-900">{item.name}</p>
+                                    <p className="text-xs text-red-600 font-medium">{item.stockLevel} units left</p>
+                                </div>
+                            </div>
+                            <button className="text-xs bg-white border border-red-200 text-red-700 px-3 py-1 rounded-lg font-bold hover:bg-red-50">Restock</button>
+                        </div>
+                    ))}
+                     {lowStockItems.length === 0 && (
+                        <div className="text-center py-8">
+                            <div className="inline-block p-3 rounded-full bg-green-50 text-green-500 mb-2">
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <p className="text-sm text-slate-500">All stock levels are healthy.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
       </div>
-    </div>
   );
 };
