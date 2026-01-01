@@ -1,5 +1,7 @@
 {
-  "name": "OMMI",
-  "description": "Unified Operating System for SMEs integrating Sales, Finance, Inventory, and AI Insights.",
-  "requestFramePermissions": []
+  "name": "OMMI OS",
+  "description": "The Unified Operating System for SMEs. Manage Sales, Inventory, Finance, and HR with integrated Gemini AI Insights.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

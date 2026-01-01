@@ -3,12 +3,22 @@ import { apiFetch } from '../lib/api';
 import { Module, Organization, SubscriptionPlan, AddOn, User } from '../types';
 import { SUBSCRIPTION_PLANS, AVAILABLE_ADDONS } from '../constants';
 
+const CURRENCY_RATES: Record<string, { rate: number, symbol: string, name: string }> = {
+  USD: { rate: 0.0077, symbol: '$', name: 'US Dollar' },
+  KES: { rate: 1, symbol: 'KES', name: 'Kenyan Shilling' },
+  NGN: { rate: 12.5, symbol: '₦', name: 'Nigerian Naira' },
+  ZAR: { rate: 0.14, symbol: 'R', name: 'South African Rand' },
+  GBP: { rate: 0.0061, symbol: '£', name: 'British Pound' },
+  EUR: { rate: 0.0071, symbol: '€', name: 'Euro' },
+};
+
 export const Upgrade: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'billing' | 'team'>('billing');
   const [modules, setModules] = useState<Module[]>([]);
   const [org, setOrg] = useState<Organization | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currency, setCurrency] = useState('USD');
 
   // New User Modal State
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -23,7 +33,7 @@ export const Upgrade: React.FC = () => {
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ type: 'plan' | 'addon', item: SubscriptionPlan | AddOn } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('card');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
 
@@ -39,6 +49,28 @@ export const Upgrade: React.FC = () => {
       setLoading(false);
     });
   }, []);
+
+  const getConvertedPrice = (priceInKes: number) => {
+     const config = CURRENCY_RATES[currency];
+     const converted = priceInKes * config.rate;
+     
+     let final = 0;
+     if (currency === 'USD' || currency === 'GBP' || currency === 'EUR') {
+        // Round to nearest .99 or whole number for aesthetics
+        if (converted > 0 && converted < 10) final = parseFloat(converted.toFixed(2));
+        else final = Math.ceil(converted);
+     } else {
+        // For weaker currencies, round up to whole numbers
+        final = Math.ceil(converted);
+     }
+     
+     return { 
+         amount: final, 
+         formatted: final.toLocaleString(undefined, { minimumFractionDigits: (currency === 'USD' && final < 10) ? 2 : 0 }),
+         symbol: config.symbol, 
+         currencyCode: currency 
+     };
+  };
 
   const handleResetDemo = async () => {
     if (confirm("This will reset the organization status to 'Pending' to demonstrate the First-Time Setup Wizard. Continue?")) {
@@ -105,6 +137,10 @@ export const Upgrade: React.FC = () => {
 
   const initiatePayment = (type: 'plan' | 'addon', item: SubscriptionPlan | AddOn) => {
     setSelectedItem({ type, item });
+    // Default payment method based on currency
+    if (currency === 'KES') setPaymentMethod('mpesa');
+    else setPaymentMethod('card');
+    
     setShowPaymentModal(true);
   };
 
@@ -152,31 +188,49 @@ export const Upgrade: React.FC = () => {
     <div className="space-y-8 max-w-6xl mx-auto">
       
       {/* Navigation */}
-      <div className="flex justify-between items-center border-b border-slate-200">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 gap-4">
          <div>
             <h2 className="text-2xl font-bold text-slate-900">Upgrade Plan</h2>
             <p className="text-slate-500 mb-4">Choose a plan that fits your business needs.</p>
          </div>
-         <nav className="flex space-x-6">
-            <button 
-              onClick={() => setActiveTab('billing')}
-              className={`pb-4 font-medium text-sm ${activeTab === 'billing' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              Plans & Billing
-            </button>
-            <button 
-              onClick={() => setActiveTab('profile')}
-              className={`pb-4 font-medium text-sm ${activeTab === 'profile' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              Modules & Settings
-            </button>
-            <button 
-              onClick={() => setActiveTab('team')}
-              className={`pb-4 font-medium text-sm ${activeTab === 'team' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              Team & Roles
-            </button>
-         </nav>
+         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            {/* Currency Selector */}
+            <div className="relative">
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="appearance-none bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-8 py-2 font-bold cursor-pointer"
+              >
+                {Object.keys(CURRENCY_RATES).map(c => (
+                    <option key={c} value={c}>{CURRENCY_RATES[c].symbol} {c}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
+
+            <nav className="flex space-x-6 w-full md:w-auto overflow-x-auto">
+                <button 
+                  onClick={() => setActiveTab('billing')}
+                  className={`pb-4 font-medium text-sm whitespace-nowrap ${activeTab === 'billing' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Plans & Billing
+                </button>
+                <button 
+                  onClick={() => setActiveTab('profile')}
+                  className={`pb-4 font-medium text-sm whitespace-nowrap ${activeTab === 'profile' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Modules & Settings
+                </button>
+                <button 
+                  onClick={() => setActiveTab('team')}
+                  className={`pb-4 font-medium text-sm whitespace-nowrap ${activeTab === 'team' ? 'border-b-2 border-blue-900 text-blue-900' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Team & Roles
+                </button>
+            </nav>
+         </div>
       </div>
 
       {activeTab === 'profile' && (
@@ -401,13 +455,15 @@ export const Upgrade: React.FC = () => {
           <section className="mb-12">
             <h3 className="text-lg font-bold text-slate-900 mb-6">Subscription Plans</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-               {SUBSCRIPTION_PLANS.map(plan => (
+               {SUBSCRIPTION_PLANS.map(plan => {
+                  const priceInfo = getConvertedPrice(plan.price);
+                  return (
                   <div key={plan.id} className={`bg-white rounded-xl p-6 border flex flex-col ${plan.recommended ? 'border-blue-500 shadow-md ring-1 ring-blue-500 relative' : 'border-slate-200'}`}>
                      {plan.recommended && <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-900 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">Most Popular</span>}
                      <h4 className="font-bold text-slate-900 text-lg">{plan.name}</h4>
                      <div className="my-4">
-                        <span className="text-3xl font-bold text-slate-900">{plan.price === 0 ? 'Free' : plan.price.toLocaleString()}</span>
-                        {plan.price > 0 && <span className="text-slate-500 text-sm ml-1">{plan.currency} / {plan.period}</span>}
+                        <span className="text-3xl font-bold text-slate-900">{plan.price === 0 ? 'Free' : `${priceInfo.symbol}${priceInfo.formatted}`}</span>
+                        {plan.price > 0 && <span className="text-slate-500 text-sm ml-1">/ {plan.period}</span>}
                      </div>
                      <ul className="space-y-3 mb-6 flex-1">
                         {plan.features.map((feat, i) => (
@@ -425,7 +481,7 @@ export const Upgrade: React.FC = () => {
                        {org?.plan === plan.id ? 'Current Plan' : plan.price === 0 ? 'Downgrade' : 'Upgrade'}
                      </button>
                   </div>
-               ))}
+               )})}
             </div>
           </section>
 
@@ -435,12 +491,13 @@ export const Upgrade: React.FC = () => {
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {AVAILABLE_ADDONS.map(addon => {
                    const isPurchased = org?.unlockedFeatures.includes(addon.id);
+                   const priceInfo = getConvertedPrice(addon.price);
                    return (
                     <div key={addon.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
                        <h4 className="font-bold text-slate-900">{addon.name}</h4>
                        <p className="text-sm text-slate-500 mt-1 mb-4 flex-1">{addon.description}</p>
                        <div className="flex justify-between items-center pt-4 border-t border-slate-100">
-                          <span className="font-bold text-slate-900">{addon.price.toLocaleString()} {addon.currency}</span>
+                          <span className="font-bold text-slate-900">{priceInfo.symbol}{priceInfo.formatted}</span>
                           {isPurchased ? (
                             <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium flex items-center">
                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
@@ -550,8 +607,16 @@ export const Upgrade: React.FC = () => {
                        <h4 className="text-xl font-bold text-slate-900">{selectedItem.item.name}</h4>
                     </div>
                     <div className="text-right">
-                       <span className="block text-xl font-bold text-blue-900">{selectedItem.item.price.toLocaleString()}</span>
-                       <span className="text-xs text-slate-500 uppercase">{selectedItem.item.currency}</span>
+                       {/* Calculate display price for modal */}
+                       {(() => {
+                           const price = getConvertedPrice(selectedItem.item.price);
+                           return (
+                               <>
+                                <span className="block text-xl font-bold text-blue-900">{price.symbol}{price.formatted}</span>
+                                <span className="text-xs text-slate-500 uppercase">{price.currencyCode}</span>
+                               </>
+                           );
+                       })()}
                     </div>
                  </div>
 
@@ -619,7 +684,10 @@ export const Upgrade: React.FC = () => {
                       paymentMethod === 'mpesa' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
                    }`}
                  >
-                    {paymentProcessing ? 'Processing...' : `Pay ${selectedItem.item.price.toLocaleString()} ${selectedItem.item.currency}`}
+                    {(() => {
+                        const price = getConvertedPrice(selectedItem.item.price);
+                        return paymentProcessing ? 'Processing...' : `Pay ${price.symbol}${price.formatted}`;
+                    })()}
                  </button>
               </div>
            </div>

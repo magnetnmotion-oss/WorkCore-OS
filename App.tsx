@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
@@ -16,7 +17,6 @@ import { Upgrade } from './pages/Settings';
 import { Login } from './pages/Login';
 import { SetupWizard } from './pages/SetupWizard';
 import { ViewState, NavigationState, Organization, User } from './types';
-import { MOCK_USER } from './constants';
 import { apiFetch } from './lib/api';
 import { Logo } from './components/Logo';
 
@@ -31,42 +31,43 @@ const App: React.FC = () => {
   // Initialize App & Check for Session
   useEffect(() => {
     const initApp = async () => {
-      // 1. Check for saved user session in localStorage
-      const savedUserStr = localStorage.getItem('ommi_user');
-      let foundUser = null;
-      let foundOrg = null;
+      try {
+        const savedUserStr = localStorage.getItem('ommi_user');
+        let foundUser = null;
+        let foundOrg = null;
 
-      if (savedUserStr) {
-        try {
-          foundUser = JSON.parse(savedUserStr);
-          // In a real app, verify token validity here
-          foundOrg = await apiFetch('/api/v1/orgs/org-1'); // Fetch org data for the saved user
-        } catch (e) {
-          console.error("Session restore failed", e);
-          localStorage.removeItem('ommi_user');
+        if (savedUserStr) {
+          try {
+            foundUser = JSON.parse(savedUserStr);
+            foundOrg = await apiFetch('/api/v1/orgs/org-1');
+          } catch (e) {
+            console.error("Session restore failed", e);
+            localStorage.removeItem('ommi_user');
+          }
         }
-      }
 
-      // 2. Enforce minimum splash screen duration for branding
-      await new Promise(resolve => setTimeout(resolve, 2000));
+        // Mandatory splash delay for aesthetics
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // 3. Navigate based on session
-      if (foundUser && foundOrg) {
-        setUser(foundUser);
-        setOrg(foundOrg);
-        setNavState({ view: ViewState.DASHBOARD });
-      } else {
+        if (foundUser && foundOrg) {
+          setUser(foundUser);
+          setOrg(foundOrg);
+          setNavState({ view: foundOrg.setupStatus === 'pending' ? ViewState.SETUP_WIZARD : ViewState.DASHBOARD });
+        } else {
+          setNavState({ view: ViewState.LOGIN });
+        }
+      } catch (err) {
+        console.error("Critical app init error:", err);
         setNavState({ view: ViewState.LOGIN });
+      } finally {
+        setShowSplash(false);
       }
-
-      setShowSplash(false);
     };
 
     initApp();
   }, []);
 
   const handleLogin = async (loggedInUser: User) => {
-    // Save user session to localStorage
     localStorage.setItem('ommi_user', JSON.stringify(loggedInUser));
     setUser(loggedInUser);
 
@@ -81,11 +82,11 @@ const App: React.FC = () => {
       }
     } catch (e) {
       console.error("Failed to fetch org details", e);
+      setNavState({ view: ViewState.DASHBOARD });
     }
   };
 
   const handleLogout = () => {
-    // Clear session
     localStorage.removeItem('ommi_user');
     setUser(null);
     setOrg(null);
@@ -102,44 +103,39 @@ const App: React.FC = () => {
     setNavState({ view: ViewState.DASHBOARD });
   };
 
-  // --- SPLASH SCREEN ---
   if (showSplash) {
     return (
-      <div className="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center z-50 animate-fade-in">
-        <div className="animate-bounce-slight scale-150">
+      <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 animate-fade-in">
+        <div className="animate-pulse scale-150">
            <Logo className="h-16 w-auto" variant="light" />
         </div>
-        <div className="mt-8 flex flex-col items-center">
-           <div className="w-16 h-1 bg-slate-800 rounded-full overflow-hidden">
-             <div className="h-full bg-orange-500 w-1/2 animate-[loading_1s_ease-in-out_infinite]"></div>
+        <div className="mt-12 flex flex-col items-center">
+           <div className="w-24 h-1 bg-white/5 rounded-full overflow-hidden">
+             <div className="h-full bg-blue-500 w-1/2 animate-shimmer"></div>
            </div>
-           <p className="text-slate-500 text-xs mt-4 font-medium tracking-widest uppercase">Loading WorkCore OS</p>
+           <p className="text-slate-500 text-[10px] mt-6 font-black tracking-[0.4em] uppercase">Booting OMMI OS</p>
         </div>
         <style>{`
-          @keyframes loading {
+          @keyframes shimmer {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(200%); }
           }
-          .animate-bounce-slight {
-            animation: bounce-slight 2s infinite;
-          }
-          @keyframes bounce-slight {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+          .animate-shimmer {
+            animation: shimmer 1.5s ease-in-out infinite;
           }
         `}</style>
       </div>
     );
   }
 
-  // --- MAIN APP CONTENT ---
-  
   const renderContent = () => {
+    if (!user) return null;
+    
     switch (navState.view) {
       case ViewState.SETUP_WIZARD:
         return <SetupWizard onComplete={completeSetup} />;
       case ViewState.DASHBOARD:
-        return <Dashboard onNavigate={handleNavigate} />;
+        return <Dashboard onNavigate={handleNavigate} user={user} />;
       case ViewState.SALES:
         return <Sales onNavigate={handleNavigate} />;
       case ViewState.INVOICE_DETAIL:
@@ -165,7 +161,7 @@ const App: React.FC = () => {
       case ViewState.UPGRADE:
         return <Upgrade />;
       default:
-        return <Dashboard onNavigate={handleNavigate} />;
+        return <Dashboard onNavigate={handleNavigate} user={user} />;
     }
   };
 

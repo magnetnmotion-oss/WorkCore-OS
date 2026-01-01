@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface StatCardProps {
@@ -5,47 +6,31 @@ interface StatCardProps {
   value: string | number;
   trend?: string;
   trendUp?: boolean;
-  icon?: React.ReactNode;
-  variant?: 'default' | 'glass';
+  onClick?: () => void;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ title, value, trend, trendUp, icon, variant = 'default' }) => {
-  const baseClasses = "rounded-xl p-6 flex items-start justify-between transition-all hover:shadow-lg";
-  
-  const variants = {
-    default: "bg-white shadow-sm border border-slate-100",
-    glass: "bg-white/20 backdrop-blur-md border border-white/30 text-white shadow-lg"
-  };
-
-  const textColors = {
-    default: { title: "text-slate-500", value: "text-slate-900", sub: "text-slate-400" },
-    glass: { title: "text-white/80", value: "text-white", sub: "text-white/70" }
-  };
-
-  const colors = textColors[variant];
-
+export const StatCard: React.FC<StatCardProps> = ({ title, value, trend, trendUp, onClick }) => {
   return (
-    <div className={`${baseClasses} ${variants[variant]}`}>
-      <div>
-        <p className={`text-sm font-medium mb-1 ${colors.title}`}>{title}</p>
-        <h3 className={`text-2xl font-bold ${colors.value}`}>{value}</h3>
+    <button 
+      onClick={onClick}
+      className="bg-[#151b2d] p-6 rounded-[28px] border border-white/5 flex flex-col justify-between h-36 group transition-all hover:bg-[#1a233a] hover:border-blue-500/30 text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-xl"
+    >
+      <div className="flex justify-between items-start w-full">
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+          {title}
+        </p>
         {trend && (
-          <p className={`text-xs font-medium mt-2 flex items-center ${
-            variant === 'glass' 
-              ? (trendUp ? 'text-green-100' : 'text-red-100') 
-              : (trendUp ? 'text-green-600' : 'text-red-600')
-          }`}>
-            <span className="mr-1">{trendUp ? '↑' : '↓'}</span>
-            {trend}
-            <span className={`ml-1 font-normal ${colors.sub}`}>vs last month</span>
-          </p>
+           <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${trendUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+             {trendUp ? '↑' : '↓'}{trend}
+           </span>
         )}
       </div>
-      {icon && (
-        <div className={`p-3 rounded-lg ${variant === 'glass' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-900'}`}>
-          {icon}
-        </div>
-      )}
-    </div>
+      <div className="text-3xl font-black text-white tracking-tight group-hover:scale-[1.02] transition-transform origin-left">
+        {value}
+      </div>
+      <div className="text-[10px] font-bold text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity uppercase tracking-widest flex items-center">
+        Analyze Data <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+      </div>
+    </button>
   );
 };

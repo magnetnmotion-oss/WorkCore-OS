@@ -1,360 +1,183 @@
+
 import React, { useEffect, useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StatCard } from '../components/StatCard';
 import { apiFetch } from '../lib/api';
-import { MOCK_METRICS } from '../constants'; 
 import { generateBusinessInsights } from '../services/geminiService';
-import { Insight, BusinessMetrics, Invoice, Item, Task, Message, ViewState } from '../types';
+import { Insight, BusinessMetrics, ViewState, User } from '../types';
 
 interface DashboardProps {
   onNavigate: (view: ViewState, data?: any) => void;
+  user: User;
 }
 
-type TimeRange = 'weekly' | 'monthly' | 'yearly';
-
-// Mock data for ranges that aren't provided by the main API endpoint yet
-const EXTRA_RANGE_DATA = {
-  weekly: [
-    { label: 'Mon', amount: 45000 },
-    { label: 'Tue', amount: 52000 },
-    { label: 'Wed', amount: 49000 },
-    { label: 'Thu', amount: 62000 },
-    { label: 'Fri', amount: 68000 },
-    { label: 'Sat', amount: 74000 },
-    { label: 'Sun', amount: 55000 },
-  ],
-  yearly: [
-    { label: '2020', amount: 850000 },
-    { label: '2021', amount: 980000 },
-    { label: '2022', amount: 1200000 },
-    { label: '2023', amount: 1450000 },
-    { label: '2024', amount: 1680000 },
-  ]
-};
-
-export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
   const [insights, setInsights] = useState<Insight[]>([]);
-  const [metrics, setMetrics] = useState<BusinessMetrics>(MOCK_METRICS);
-  
-  const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
-  const [lowStockItems, setLowStockItems] = useState<Item[]>([]);
-  const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
-  const [recentMessages, setRecentMessages] = useState<Message[]>([]);
-
+  const [metrics, setMetrics] = useState<BusinessMetrics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingInsights, setLoadingInsights] = useState(false);
-  
-  // New state for chart filtering
-  const [timeRange, setTimeRange] = useState<TimeRange>('monthly');
-
-  // Check if account is fresh (no revenue, no invoices)
-  const isFreshAccount = metrics.totalRevenue === 0 && recentInvoices.length === 0 && lowStockItems.length === 0;
-
-  const fetchInsights = async (currentMetrics: BusinessMetrics) => {
-    setLoadingInsights(true);
-    const results = await generateBusinessInsights(currentMetrics);
-    setInsights(results);
-    setLoadingInsights(false);
-  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [m, inv, items, tasks, msgs] = await Promise.all([
-          apiFetch('/api/v1/metrics'),
-          apiFetch('/api/v1/invoices'),
-          apiFetch('/api/v1/items'),
-          apiFetch('/api/v1/tasks'),
-          apiFetch('/api/v1/messages')
-        ]);
-
-        setMetrics(m as BusinessMetrics);
-        
-        const allInvoices = inv as Invoice[];
-        setRecentInvoices(allInvoices.slice(0, 5));
-
-        const allItems = items as Item[];
-        setLowStockItems(allItems.filter(i => i.stockLevel <= i.reOrderLevel).slice(0, 5));
-
-        const allTasks = tasks as Task[];
-        setPendingTasks(
-          allTasks
-            .filter(t => t.status !== 'done')
-            .sort((a, b) => (a.priority === 'high' ? -1 : 1))
-            .slice(0, 5)
-        );
-
-        const allMsgs = msgs as Message[];
-        setRecentMessages(allMsgs.slice(0, 5));
-
-        // Only fetch insights if there is data
-        if ((m as BusinessMetrics).totalRevenue > 0) {
-            fetchInsights(m as BusinessMetrics);
-        }
-      } catch (error) {
-        console.error("Failed to load dashboard data", error);
-      } finally {
-        setLoading(false);
+    apiFetch('/api/v1/metrics').then(m => {
+      const data = m as BusinessMetrics;
+      setMetrics(data);
+      setLoading(false);
+      if (data.totalRevenue > 0 || data.activeLeads > 0) {
+        generateBusinessInsights(data).then(setInsights);
       }
-    };
-
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    });
   }, []);
 
-  // Determine chart data based on selection
-  const getChartData = () => {
-    if (timeRange === 'weekly') return EXTRA_RANGE_DATA.weekly;
-    if (timeRange === 'yearly') return EXTRA_RANGE_DATA.yearly;
-    // Default to monthly (from API)
-    return metrics.revenueTrend.map(d => ({ label: d.month, amount: d.amount }));
-  };
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <div className="w-12 h-12 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+      <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Syncing Terminal...</p>
+    </div>
+  );
 
-  if (loading) {
-    return <div className="py-20 text-center text-slate-400">Loading dashboard...</div>;
-  }
+  const isFirstTimeUser = !metrics || (metrics.totalRevenue === 0 && metrics.activeLeads === 0 && metrics.lowStockItems === 0 && metrics.pendingInvoices === 0);
 
-  // --- EMPTY STATE DASHBOARD FOR NEW USERS ---
-  if (isFreshAccount) {
-    return (
-      <div className="space-y-8 animate-fade-in p-8 rounded-3xl bg-gradient-to-r from-orange-500 to-amber-500 min-h-[80vh] shadow-xl">
-        <div>
-          <h2 className="text-3xl font-bold text-white drop-shadow-sm">Welcome to OMMI! 👋</h2>
-          <p className="text-white/90 mt-2 text-lg">Your operating system is ready. Start by adding your business data.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <button 
-            onClick={() => onNavigate(ViewState.SALES)}
-            className="group p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all text-left transform hover:-translate-y-1"
-          >
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-            <h3 className="font-bold text-slate-900 text-lg">Sales & Invoicing</h3>
-            <p className="text-slate-500 text-sm mt-1">Create your first invoice and track revenue.</p>
-            <span className="text-blue-600 text-sm font-bold mt-4 block group-hover:underline">Get Started &rarr;</span>
-          </button>
-
-          <button 
-            onClick={() => onNavigate(ViewState.INVENTORY)}
-            className="group p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all text-left transform hover:-translate-y-1"
-          >
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-4">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-            </div>
-            <h3 className="font-bold text-slate-900 text-lg">Inventory</h3>
-            <p className="text-slate-500 text-sm mt-1">Add products and manage stock levels.</p>
-            <span className="text-purple-600 text-sm font-bold mt-4 block group-hover:underline">Add Items &rarr;</span>
-          </button>
-
-          <button 
-            onClick={() => onNavigate(ViewState.HR)}
-            className="group p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all text-left transform hover:-translate-y-1"
-          >
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-            </div>
-            <h3 className="font-bold text-slate-900 text-lg">Team & HR</h3>
-            <p className="text-slate-500 text-sm mt-1">Add employees and manage payroll.</p>
-            <span className="text-green-600 text-sm font-bold mt-4 block group-hover:underline">Add Team &rarr;</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // --- MAIN DASHBOARD VIEW ---
   return (
-      <div className="space-y-8 animate-fade-in pb-8">
-        {/* OVERVIEW SECTION - ORANGE GRADIENT BACKGROUND */}
-        <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-8 text-white shadow-xl">
-            <div className="flex justify-between items-start mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold mb-2">Overview</h1>
-                    <p className="text-white/90 text-lg">Welcome back, here's what's happening today.</p>
-                </div>
-                <button 
-                  onClick={() => fetchInsights(metrics)}
-                  disabled={loadingInsights}
-                  className="bg-blue-900 hover:bg-blue-800 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg flex items-center disabled:opacity-70 border border-blue-700"
-                >
-                  {loadingInsights ? (
-                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  ) : (
-                     <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  )}
-                  Refresh Insights
-                </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard 
-                  title="Total Revenue" 
-                  value={`KES ${metrics.totalRevenue.toLocaleString()}`} 
-                  trend="12.5%" 
-                  trendUp={true} 
-                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                  variant="glass"
-                />
-                <StatCard 
-                  title="Active Leads" 
-                  value={metrics.activeLeads} 
-                  trend="4.2%" 
-                  trendUp={true} 
-                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
-                  variant="glass"
-                />
-                <StatCard 
-                  title="Pending Invoices" 
-                  value={metrics.pendingInvoices} 
-                  trend="2.1%" 
-                  trendUp={false} 
-                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                  variant="glass"
-                />
-                <StatCard 
-                  title="Low Stock Items" 
-                  value={metrics.lowStockItems} 
-                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>}
-                  variant="glass"
-                />
-            </div>
+    <div className="space-y-8 animate-fade-in pb-12">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-white tracking-tighter">
+            {isFirstTimeUser ? `Welcome, ${user.fullName.split(' ')[0]}` : 'Command Center'}
+          </h1>
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">
+            Workspace: {isFirstTimeUser ? 'Ready for deployment' : 'Nairobi Logistics Hub • Live'}
+          </p>
         </div>
-
-        {/* REST OF DASHBOARD - WHITE CARDS */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Revenue Analytics */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                  <h3 className="text-lg font-bold text-slate-900">Revenue Analytics (KES)</h3>
-                  <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                    {['Weekly', 'Monthly', 'Yearly'].map((range) => (
-                      <button
-                        key={range}
-                        onClick={() => setTimeRange(range.toLowerCase() as TimeRange)}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                          timeRange === range.toLowerCase() 
-                            ? 'bg-white text-slate-900 shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                      >
-                        {range}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={getChartData()}>
-                      <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                        formatter={(val: number) => `KES ${val.toLocaleString()}`}
-                      />
-                      <Area type="monotone" dataKey="amount" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-            </div>
-
-            {/* AI Insights */}
-            <div className="bg-[#fffbeb] p-6 rounded-2xl border border-orange-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <svg className="w-32 h-32 text-orange-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
-                    <span className="bg-orange-500 text-white p-1.5 rounded-lg mr-2">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    </span>
-                    Automated Insights
-                </h3>
-                
-                <div className="space-y-4 relative z-10">
-                    {insights.length > 0 ? (
-                        insights.map(insight => (
-                            <div key={insight.id} className="bg-white p-4 rounded-xl shadow-sm border border-orange-100">
-                                <h4 className="font-bold text-slate-800 text-sm mb-1">{insight.title}</h4>
-                                <p className="text-xs text-slate-600 leading-relaxed">{insight.description}</p>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-8 text-slate-500 text-sm">
-                           Click "Refresh Insights" to generate AI-powered analysis of your business performance.
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Recent Invoices */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-slate-900">Recent Invoices</h3>
-                    <button onClick={() => onNavigate(ViewState.SALES)} className="text-blue-600 text-sm font-medium hover:underline">View All</button>
-                </div>
-                <div className="space-y-4">
-                    {recentInvoices.map(inv => (
-                        <div key={inv.id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer" onClick={() => onNavigate(ViewState.INVOICE_DETAIL, inv.id)}>
-                            <div className="flex items-center space-x-3">
-                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                </div>
-                                <div>
-                                    <p className="font-bold text-sm text-slate-900">{inv.clientName}</p>
-                                    <p className="text-xs text-slate-500">{inv.invoiceNumber}</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <p className="font-bold text-sm text-slate-900">KES {inv.total.toLocaleString()}</p>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{inv.status}</span>
-                            </div>
-                        </div>
-                    ))}
-                    {recentInvoices.length === 0 && <p className="text-slate-400 text-sm text-center py-4">No invoices found.</p>}
-                </div>
-            </div>
-
-            {/* Low Stock Alerts */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-slate-900">Inventory Alerts</h3>
-                    <button onClick={() => onNavigate(ViewState.INVENTORY)} className="text-blue-600 text-sm font-medium hover:underline">Manage Stock</button>
-                </div>
-                <div className="space-y-3">
-                    {lowStockItems.map(item => (
-                        <div key={item.id} className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer" onClick={() => onNavigate(ViewState.INVENTORY_DETAIL, item.id)}>
-                            <div className="flex items-center space-x-3">
-                                <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                <div>
-                                    <p className="font-bold text-sm text-slate-900">{item.name}</p>
-                                    <p className="text-xs text-red-600 font-medium">{item.stockLevel} units left</p>
-                                </div>
-                            </div>
-                            <button className="text-xs bg-white border border-red-200 text-red-700 px-3 py-1 rounded-lg font-bold hover:bg-red-50">Restock</button>
-                        </div>
-                    ))}
-                     {lowStockItems.length === 0 && (
-                        <div className="text-center py-8">
-                            <div className="inline-block p-3 rounded-full bg-green-50 text-green-500 mb-2">
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                            </div>
-                            <p className="text-sm text-slate-500">All stock levels are healthy.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+        <div className="flex items-center space-x-3 bg-[#151b2d] border border-white/5 p-2 rounded-2xl">
+           <div className="flex -space-x-2 mr-3">
+              {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-[#151b2d] bg-slate-700 flex items-center justify-center text-[10px] font-bold">U{i}</div>)}
+           </div>
+           <button onClick={() => onNavigate(ViewState.COMMS)} className="bg-blue-600/10 text-blue-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+              Team Pulse
+           </button>
         </div>
       </div>
+
+      {isFirstTimeUser ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-8 space-y-6">
+            <div className="bg-gradient-to-br from-[#151b2d] to-[#0a0f1e] rounded-[40px] p-8 lg:p-12 text-white relative overflow-hidden border border-white/10 shadow-2xl">
+              <div className="absolute top-0 right-0 w-[60%] h-full bg-blue-600/10 blur-[120px] pointer-events-none"></div>
+              <div className="relative z-10">
+                <h2 className="text-3xl font-black mb-4 tracking-tighter italic uppercase underline decoration-orange-500 underline-offset-8">Initialization</h2>
+                <p className="text-slate-400 mb-10 max-w-md text-lg font-medium leading-relaxed">
+                  The OMMI core is online. Connect your business streams to activate real-time intelligence.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { id: '01', label: 'Sales OS', view: ViewState.SALES, desc: 'Add first revenue record' },
+                    { id: '02', label: 'Inventory OS', view: ViewState.INVENTORY, desc: 'Sync your warehouse' },
+                    { id: '03', label: 'Team OS', view: ViewState.HR, desc: 'Onboard your staff' },
+                    { id: '04', label: 'Comms OS', view: ViewState.COMMS, desc: 'Link WhatsApp & Email' }
+                  ].map(step => (
+                    <button 
+                      key={step.id}
+                      onClick={() => onNavigate(step.view)}
+                      className="flex items-center space-x-5 p-6 bg-white/5 border border-white/5 rounded-[24px] text-left hover:bg-white/10 transition-all group"
+                    >
+                      <div className="text-2xl font-black text-slate-700 group-hover:text-blue-500 transition-colors">
+                        {step.id}
+                      </div>
+                      <div>
+                        <p className="font-black text-xs uppercase tracking-[0.2em]">{step.label}</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">{step.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-[#151b2d] p-8 rounded-[40px] border border-white/5">
+              <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">AI Co-Pilot Status</h3>
+              <div className="bg-[#0a0f1e] rounded-3xl p-8 text-center space-y-6 border border-white/5">
+                 <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto ring-8 ring-blue-500/5">
+                    <svg className="w-10 h-10 text-blue-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                 </div>
+                 <div>
+                    <p className="text-sm font-black uppercase text-white tracking-widest">Calibration</p>
+                    <p className="text-[10px] text-slate-500 mt-2 font-bold leading-relaxed uppercase tracking-tighter">Gemini is scanning for data streams. Feed the OS to generate growth insights.</p>
+                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <StatCard title="Revenue" value={`KES ${(metrics?.totalRevenue || 0).toLocaleString()}`} trend="12.4%" trendUp onClick={() => onNavigate(ViewState.FINANCE)} />
+            <StatCard title="Pipeline" value={`${metrics?.activeLeads || 0} Leads`} trend="8" trendUp onClick={() => onNavigate(ViewState.SALES)} />
+            <StatCard title="Inventory" value={`${metrics?.lowStockItems || 0} Alerts`} trend={metrics?.lowStockItems ? "Low" : "Optimal"} trendUp={!metrics?.lowStockItems} onClick={() => onNavigate(ViewState.INVENTORY)} />
+            <StatCard title="Billing" value={`${metrics?.pendingInvoices || 0} Unpaid`} onClick={() => onNavigate(ViewState.SALES)} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8 space-y-8">
+              <div className="bg-[#151b2d] p-10 rounded-[40px] border border-white/5 relative overflow-hidden shadow-2xl">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[80px]"></div>
+                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
+                    <div>
+                       <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Net Cash Flow</h3>
+                       <p className="text-4xl font-black text-white tracking-tighter">KES 719,750</p>
+                       <div className="mt-4 flex items-center space-x-4">
+                          <div className="flex items-center space-x-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div><span className="text-[10px] font-black uppercase text-slate-400">Incoming</span></div>
+                          <div className="flex items-center space-x-1.5"><div className="w-2 h-2 rounded-full bg-rose-500"></div><span className="text-[10px] font-black uppercase text-slate-400">Outgoing</span></div>
+                       </div>
+                    </div>
+                    <div className="w-full md:w-auto flex flex-col space-y-2">
+                       <button onClick={() => onNavigate(ViewState.FINANCE)} className="bg-white/5 hover:bg-white/10 border border-white/5 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white transition-all text-center">Open Ledger</button>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { label: 'Operations', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', view: ViewState.OPERATIONS, color: 'text-blue-400' },
+                  { label: 'Marketing', icon: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z', view: ViewState.MARKETING, color: 'text-pink-400' },
+                  { label: 'Team OS', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', view: ViewState.HR, color: 'text-purple-400' }
+                ].map(mod => (
+                  <button key={mod.label} onClick={() => onNavigate(mod.view)} className="bg-[#151b2d] p-8 rounded-[32px] border border-white/5 flex flex-col items-center space-y-4 hover:border-blue-500/40 transition-all group shadow-lg">
+                    <div className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center ${mod.color} group-hover:scale-110 transition-transform`}>
+                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mod.icon} /></svg>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">{mod.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 space-y-8">
+              <section className="bg-[#151b2d] p-8 rounded-[40px] border border-white/5 shadow-2xl">
+                <div className="flex justify-between items-center mb-10">
+                  <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">AI Insights</h3>
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,1)]"></div>
+                </div>
+                <div className="space-y-6">
+                  {insights.length > 0 ? insights.map((insight) => (
+                    <button key={insight.id} onClick={() => onNavigate(ViewState.SALES)} className="w-full text-left p-6 rounded-[24px] bg-[#0a0f1e] border border-white/5 hover:border-blue-500/30 transition-all group">
+                      <div className="flex items-center space-x-3 mb-2">
+                         <div className={`w-1.5 h-1.5 rounded-full ${insight.type === 'opportunity' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : insight.type === 'risk' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]' : 'bg-blue-500'}`}></div>
+                         <p className="text-[11px] font-black uppercase text-white tracking-widest group-hover:text-blue-400">{insight.title}</p>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-bold leading-relaxed uppercase tracking-tighter">{insight.description}</p>
+                    </button>
+                  )) : (
+                    <div className="py-12 text-center">
+                       <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Processing Intelligence...</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 };

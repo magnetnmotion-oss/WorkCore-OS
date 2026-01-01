@@ -37,7 +37,7 @@ export interface Organization {
   phone?: string;
   email?: string;
   address?: string;
-  logoUrl?: string; // New
+  logoUrl?: string; 
   
   subscription: Subscription;
   limits: {
@@ -77,7 +77,7 @@ export interface Module {
   price: number;
 }
 
-// Marketing Module (New)
+// Marketing Module
 export interface MarketingCampaign {
   id: string;
   name: string;
@@ -86,7 +86,7 @@ export interface MarketingCampaign {
   sentCount: number;
   deliveredCount: number;
   clickCount: number;
-  conversionCount: number; // Leads or Orders generated
+  conversionCount: number; 
   revenueGenerated: number;
   startDate: string;
 }
@@ -96,11 +96,11 @@ export interface MarketingTemplate {
   name: string;
   channel: 'WhatsApp' | 'Email' | 'SMS';
   content: string;
-  variables: string[]; // e.g. ['customer_name', 'promo_code']
+  variables: string[]; 
   thumbnail?: string;
 }
 
-// Notifications (New)
+// Notifications
 export interface Notification {
   id: string;
   title: string;
@@ -296,6 +296,11 @@ export interface Task {
   dueDate: string;
 }
 
+export interface AIChatMessage {
+  role: 'user' | 'model';
+  text: string;
+}
+
 export enum ViewState {
   LOGIN = 'LOGIN',
   SETUP_WIZARD = 'SETUP_WIZARD',
@@ -311,7 +316,7 @@ export enum ViewState {
   PROJECT_DETAIL = 'PROJECT_DETAIL',
   COMMS = 'COMMS',
   MARKETING = 'MARKETING', 
-  UPGRADE = 'UPGRADE' // Renamed from SETTINGS
+  UPGRADE = 'UPGRADE'
 }
 
 export interface NavigationState {

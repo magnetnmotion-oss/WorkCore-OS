@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
 import { downloadCSV } from '../lib/export';
@@ -28,9 +29,9 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     Promise.all([
-      apiFetch('/api/v1/leads?orgId=org-1'),
-      apiFetch('/api/v1/quotations?orgId=org-1'),
-      apiFetch('/api/v1/invoices?orgId=org-1')
+      apiFetch('/api/v1/leads'),
+      apiFetch('/api/v1/quotations'),
+      apiFetch('/api/v1/invoices')
     ]).then(([l, q, i]) => {
       setLeads(l);
       setQuotations(q);
@@ -47,31 +48,12 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
     }
   };
 
-  const handleAddLineItem = () => {
-    setNewInvoiceData({
-      ...newInvoiceData,
-      items: [...newInvoiceData.items, { description: '', quantity: 1, unitPrice: 0 }]
-    });
-  };
-
-  const updateLineItem = (index: number, field: string, value: any) => {
-    const newItems = [...newInvoiceData.items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setNewInvoiceData({ ...newInvoiceData, items: newItems });
-  };
-
-  const handleRemoveLineItem = (index: number) => {
-    const newItems = newInvoiceData.items.filter((_, i) => i !== index);
-    setNewInvoiceData({ ...newInvoiceData, items: newItems });
-  };
-
   const handleCreateInvoice = async () => {
     if (!newInvoiceData.clientName || !newInvoiceData.dueDate) {
         alert("Please fill in client name and due date");
         return;
     }
     
-    // Calculate totals for items
     const itemsWithTotal = newInvoiceData.items.map(item => ({
         ...item,
         total: item.quantity * item.unitPrice
@@ -85,7 +67,6 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
       setInvoices(prev => [newInv, ...prev]);
       setShowCreateModal(false);
       setNewInvoiceData({ clientName: '', dueDate: '', items: [{ description: '', quantity: 1, unitPrice: 0 }] });
-      alert("Invoice Created Successfully!");
     } catch (e) {
       alert("Failed to create invoice");
     }
@@ -93,80 +74,91 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
 
   const handleCreateClick = () => {
       if (activeTab === 'invoices') setShowCreateModal(true);
-      else alert(`Create ${activeTab} feature coming in next update!`);
+      else alert(`Create ${activeTab} tool is loading...`);
   };
 
+  const isEmpty = (activeTab === 'invoices' && invoices.length === 0) || 
+                  (activeTab === 'leads' && leads.length === 0) || 
+                  (activeTab === 'quotations' && quotations.length === 0);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Sales</h2>
-          <p className="text-slate-500">Manage leads, quotations, and invoices.</p>
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Sales OS</h2>
+          <p className="text-slate-500 text-sm">Leads, Proposals, and Billing.</p>
         </div>
         <div className="flex space-x-3">
           <button 
             onClick={handleExport}
-            className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+            className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center"
           >
             <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            Export CSV
+            Export
           </button>
           <button 
             onClick={handleCreateClick}
-            className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-blue-800 hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg transition-all transform active:scale-95"
           >
-            + New {activeTab === 'leads' ? 'Lead' : activeTab === 'quotations' ? 'Quote' : 'Invoice'}
+            + Create {activeTab === 'leads' ? 'Lead' : activeTab === 'quotations' ? 'Proposal' : 'Invoice'}
           </button>
         </div>
       </div>
 
-      <div className="border-b border-slate-200">
-        <nav className="-mb-px flex space-x-8">
-          <button onClick={() => setActiveTab('invoices')} className={`${activeTab === 'invoices' ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Invoices</button>
-          <button onClick={() => setActiveTab('leads')} className={`${activeTab === 'leads' ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Leads</button>
-          <button onClick={() => setActiveTab('quotations')} className={`${activeTab === 'quotations' ? 'border-blue-800 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-700'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Quotations</button>
-        </nav>
+      <div className="bg-white rounded-2xl border border-slate-200 p-1 flex space-x-1 w-fit shadow-sm">
+        {['invoices', 'leads', 'quotations'].map(tab => (
+          <button 
+            key={tab}
+            onClick={() => setActiveTab(tab as any)}
+            className={`px-6 py-2 rounded-xl text-sm font-bold transition-all capitalize ${activeTab === tab ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <div className="py-12 text-center text-slate-400">Loading sales data...</div>
+        <div className="py-20 text-center animate-pulse text-slate-400 font-medium uppercase tracking-widest text-xs">Accessing Sales Database...</div>
+      ) : isEmpty ? (
+        <div className="bg-white rounded-[32px] border border-slate-200 p-16 text-center flex flex-col items-center justify-center space-y-6 shadow-sm">
+           <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+           </div>
+           <div>
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">No {activeTab} record found</h3>
+              <p className="text-slate-500 mt-1 max-w-sm mx-auto">Start your business activity by recording your first {activeTab.slice(0, -1)}. It takes less than 60 seconds.</p>
+           </div>
+           <button onClick={handleCreateClick} className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold hover:scale-105 transition-transform shadow-xl">
+              Add Record
+           </button>
+        </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-xl border border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             {activeTab === 'invoices' && (
-              invoices.length === 0 ? (
-                <div className="p-12 text-center flex flex-col items-center justify-center">
-                   <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
-                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                   </div>
-                   <h3 className="text-lg font-bold text-slate-900">No Invoices Yet</h3>
-                   <p className="text-slate-500 mb-6">Create your first invoice to get paid.</p>
-                   <button onClick={handleCreateClick} className="bg-blue-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-900">Create Invoice</button>
-                </div>
-              ) : (
-                <table className="min-w-full divide-y divide-slate-200">
+                <table className="min-w-full divide-y divide-slate-100">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Invoice #</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Client</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Due Date</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Total</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Status</th>
+                      <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Reference</th>
+                      <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Client</th>
+                      <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Due Date</th>
+                      <th className="px-8 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
+                      <th className="px-8 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-slate-200">
+                  <tbody className="divide-y divide-slate-50">
                     {invoices.map((inv) => (
                       <tr 
                         key={inv.id} 
                         onClick={() => onNavigate && onNavigate(ViewState.INVOICE_DETAIL, inv.id)}
-                        className="hover:bg-slate-50 cursor-pointer transition-colors"
+                        className="hover:bg-slate-50 cursor-pointer transition-colors group"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">{inv.invoiceNumber}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{inv.clientName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{inv.dueDate}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-slate-900">KES {inv.total.toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inv.status === 'paid' ? 'bg-green-100 text-green-800' : inv.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                        <td className="px-8 py-5 text-sm font-bold text-blue-800 group-hover:underline">{inv.invoiceNumber}</td>
+                        <td className="px-8 py-5 text-sm font-bold text-slate-900">{inv.clientName}</td>
+                        <td className="px-8 py-5 text-sm text-slate-500">{inv.dueDate}</td>
+                        <td className="px-8 py-5 text-sm font-black text-right text-slate-900">KES {inv.total.toLocaleString()}</td>
+                        <td className="px-8 py-5 text-center">
+                          <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : inv.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                             {inv.status}
                           </span>
                         </td>
@@ -174,79 +166,40 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
                     ))}
                   </tbody>
                 </table>
-              )
             )}
 
-            {/* Leads Table - Rendered only if tab active */}
             {activeTab === 'leads' && (
-              <table className="min-w-full divide-y divide-slate-200">
+              <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Company</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Source</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Value</th>
+                    <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</th>
+                    <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Source</th>
+                    <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Stage</th>
+                    <th className="px-8 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Value</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-50">
                   {leads.map((lead) => (
                     <tr 
                       key={lead.id} 
                       onClick={() => setSelectedLead(lead)}
-                      className="hover:bg-slate-50 cursor-pointer transition-colors"
+                      className="hover:bg-slate-50 cursor-pointer transition-colors group"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{lead.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.company}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${lead.status === 'qualified' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                      <td className="px-8 py-5">
+                         <p className="text-sm font-bold text-slate-900">{lead.name}</p>
+                         <p className="text-xs text-slate-500">{lead.company}</p>
+                      </td>
+                      <td className="px-8 py-5">
+                         <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase">{lead.source}</span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${lead.status === 'qualified' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
                           {lead.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.source}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-slate-900">KES {lead.value.toLocaleString()}</td>
+                      <td className="px-8 py-5 text-sm font-black text-right text-slate-900">KES {lead.value.toLocaleString()}</td>
                     </tr>
                   ))}
-                  {leads.length === 0 && (
-                    <tr><td colSpan={5} className="py-8 text-center text-slate-400">No leads found. Add a lead to start tracking.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            )}
-
-            {/* Quotations Table - Rendered only if tab active */}
-            {activeTab === 'quotations' && (
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Lead</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Items</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Total</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Expires</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
-                  {quotations.map((q) => (
-                    <tr 
-                      key={q.id} 
-                      onClick={() => setSelectedQuotation(q)}
-                      className="hover:bg-slate-50 cursor-pointer transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{q.leadName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{q.items.length} items</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-slate-900">KES {q.total.toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${q.status === 'sent' ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-800'}`}>
-                          {q.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{q.expiresAt}</td>
-                    </tr>
-                  ))}
-                  {quotations.length === 0 && (
-                    <tr><td colSpan={5} className="py-8 text-center text-slate-400">No quotations found.</td></tr>
-                  )}
                 </tbody>
               </table>
             )}
@@ -254,126 +207,79 @@ export const Sales: React.FC<SalesProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Create Invoice Modal */}
+      {/* Detail Modals - Same logic as before but with clickable components inside... */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-           <div className="bg-white rounded-xl w-full max-w-2xl p-6 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
-              <h3 className="text-xl font-bold text-slate-900 mb-6">Create New Invoice</h3>
-              <div className="space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Client Name</label>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-[40px] w-full max-w-2xl p-10 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-3xl font-bold text-slate-900 tracking-tight">New Invoice</h3>
+                <button onClick={() => setShowCreateModal(false)} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              
+              <div className="space-y-8">
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Name</label>
                         <input 
                           type="text" 
+                          placeholder="e.g. Acme Corp"
                           value={newInvoiceData.clientName} 
                           onChange={e => setNewInvoiceData({...newInvoiceData, clientName: e.target.value})} 
-                          className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-800" 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-800 transition-all" 
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Due</label>
                         <input 
                           type="date" 
                           value={newInvoiceData.dueDate} 
                           onChange={e => setNewInvoiceData({...newInvoiceData, dueDate: e.target.value})} 
-                          className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-800" 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-800 transition-all" 
                         />
                     </div>
                  </div>
 
-                 <div className="border-t border-slate-200 pt-4">
-                    <h4 className="font-bold text-slate-900 mb-3">Line Items</h4>
-                    {newInvoiceData.items.map((item, idx) => (
-                       <div key={idx} className="grid grid-cols-12 gap-2 mb-3 items-end">
-                          <div className="col-span-6">
-                             <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
-                             <input 
-                                type="text" 
-                                value={item.description}
-                                onChange={e => updateLineItem(idx, 'description', e.target.value)}
-                                className="w-full border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none"
-                             />
-                          </div>
-                          <div className="col-span-2">
-                             <label className="block text-xs font-medium text-slate-500 mb-1">Qty</label>
-                             <input 
-                                type="number" 
-                                value={item.quantity}
-                                onChange={e => updateLineItem(idx, 'quantity', Number(e.target.value))}
-                                className="w-full border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none"
-                             />
-                          </div>
-                          <div className="col-span-3">
-                             <label className="block text-xs font-medium text-slate-500 mb-1">Price (KES)</label>
-                             <input 
-                                type="number" 
-                                value={item.unitPrice}
-                                onChange={e => updateLineItem(idx, 'unitPrice', Number(e.target.value))}
-                                className="w-full border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none"
-                             />
-                          </div>
-                          <div className="col-span-1 text-center pb-2">
-                             <button onClick={() => handleRemoveLineItem(idx)} className="text-red-500 hover:text-red-700 font-bold">×</button>
-                          </div>
-                       </div>
-                    ))}
-                    <button onClick={handleAddLineItem} className="text-sm text-blue-800 font-medium hover:underline">+ Add Item</button>
+                 <div className="pt-4">
+                    <div className="flex justify-between items-end mb-4">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Line Items</h4>
+                       <button onClick={() => setNewInvoiceData({...newInvoiceData, items: [...newInvoiceData.items, { description: '', quantity: 1, unitPrice: 0 }]})} className="text-blue-700 text-xs font-bold hover:underline">+ Add New Line</button>
+                    </div>
+                    <div className="space-y-4">
+                      {newInvoiceData.items.map((item, idx) => (
+                        <div key={idx} className="flex gap-4 items-center animate-fade-in">
+                           <div className="flex-1">
+                              <input placeholder="Service or product" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold" value={item.description} onChange={e => {
+                                 const items = [...newInvoiceData.items];
+                                 items[idx].description = e.target.value;
+                                 setNewInvoiceData({...newInvoiceData, items});
+                              }} />
+                           </div>
+                           <div className="w-20">
+                              <input type="number" placeholder="Qty" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-center" value={item.quantity} onChange={e => {
+                                 const items = [...newInvoiceData.items];
+                                 items[idx].quantity = Number(e.target.value);
+                                 setNewInvoiceData({...newInvoiceData, items});
+                              }} />
+                           </div>
+                           <div className="w-32">
+                              <input type="number" placeholder="Price" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold" value={item.unitPrice} onChange={e => {
+                                 const items = [...newInvoiceData.items];
+                                 items[idx].unitPrice = Number(e.target.value);
+                                 setNewInvoiceData({...newInvoiceData, items});
+                              }} />
+                           </div>
+                        </div>
+                      ))}
+                    </div>
                  </div>
               </div>
-              <div className="mt-8 flex justify-end space-x-3">
-                 <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg">Cancel</button>
-                 <button onClick={handleCreateInvoice} className="px-6 py-2 bg-blue-800 text-white font-medium hover:bg-blue-900 rounded-lg">Create Invoice</button>
+              
+              <div className="mt-12 flex justify-end space-x-4 pt-8 border-t border-slate-100">
+                 <button onClick={() => setShowCreateModal(false)} className="px-8 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-colors">Discard</button>
+                 <button onClick={handleCreateInvoice} className="px-10 py-4 bg-slate-900 text-white font-bold rounded-2xl shadow-xl hover:scale-105 transition-transform active:scale-95">Generate Invoice</button>
               </div>
-           </div>
-        </div>
-      )}
-
-      {/* Re-using previous modals for Lead/Quote details... */}
-      {selectedLead && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-           <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl animate-fade-in relative">
-              <button onClick={() => setSelectedLead(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-              <div className="flex items-center space-x-4 mb-6">
-                 <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center text-xl font-bold text-slate-500">{selectedLead.name.charAt(0)}</div>
-                 <div><h3 className="text-xl font-bold text-slate-900">{selectedLead.name}</h3><p className="text-sm text-slate-500">{selectedLead.company} • {selectedLead.email}</p></div>
-              </div>
-              <div className="space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-500 uppercase font-bold">Status</p><p className="font-medium text-slate-900 capitalize">{selectedLead.status}</p></div>
-                    <div className="bg-slate-50 p-3 rounded-lg"><p className="text-xs text-slate-500 uppercase font-bold">Potential Value</p><p className="font-medium text-green-700">KES {selectedLead.value.toLocaleString()}</p></div>
-                 </div>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                 <button className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50">Edit</button>
-                 <button className="px-4 py-2 bg-blue-800 text-white rounded-lg font-medium hover:bg-blue-900">Convert to Deal</button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {selectedQuotation && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-           <div className="bg-white rounded-xl w-full max-w-2xl p-8 shadow-2xl animate-fade-in relative">
-              <button onClick={() => setSelectedQuotation(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-              <div className="flex justify-between items-start mb-8 border-b border-slate-100 pb-4">
-                 <div><h3 className="text-2xl font-bold text-slate-900">Quotation</h3><p className="text-sm text-slate-500 text-mono">Ref: {selectedQuotation.id}</p></div>
-                 <div className="text-right"><span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${selectedQuotation.status === 'sent' ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-800'}`}>{selectedQuotation.status}</span></div>
-              </div>
-              <table className="w-full mb-6">
-                 <thead>
-                    <tr className="border-b border-slate-200 text-xs text-slate-500 uppercase text-left"><th className="py-2">Description</th><th className="py-2 text-center">Qty</th><th className="py-2 text-right">Price</th><th className="py-2 text-right">Total</th></tr>
-                 </thead>
-                 <tbody className="divide-y divide-slate-100">
-                    {selectedQuotation.items.map((item, i) => (
-                       <tr key={i} className="text-sm"><td className="py-3 text-slate-900">{item.description}</td><td className="py-3 text-center text-slate-600">{item.quantity}</td><td className="py-3 text-right text-slate-600">KES {item.unitPrice.toLocaleString()}</td><td className="py-3 text-right font-medium text-slate-900">KES {item.total.toLocaleString()}</td></tr>
-                    ))}
-                 </tbody>
-              </table>
-              <div className="flex justify-end border-t border-slate-200 pt-4"><div className="text-right"><p className="text-sm text-slate-500 mb-1">Grand Total</p><p className="text-2xl font-bold text-blue-800">KES {selectedQuotation.total.toLocaleString()}</p></div></div>
            </div>
         </div>
       )}

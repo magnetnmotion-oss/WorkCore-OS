@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import { User } from '../types';
@@ -10,129 +11,114 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: ''
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
-      let response;
-      if (mode === 'login') {
-        response = await apiFetch('/api/v1/auth/login', {
-          method: 'POST',
-          body: JSON.stringify({ email: formData.email, password: formData.password })
-        });
-      } else {
-        response = await apiFetch('/api/v1/auth/signup', {
-          method: 'POST',
-          body: JSON.stringify({ 
-            email: formData.email, 
-            password: formData.password,
-            fullName: formData.fullName
-          })
-        });
-      }
+      const response = mode === 'login' 
+        ? await apiFetch('/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+        : await apiFetch('/api/v1/auth/signup', { method: 'POST', body: JSON.stringify({ email, password, fullName }) });
       
-      if (response && response.user) {
+      if (response?.user) {
         onLogin(response.user);
       }
     } catch (error) {
-      console.error("Authentication failed", error);
-      alert(mode === 'login' ? "Login failed. Try demo@ommi.io / password" : "Sign up failed.");
+      alert("Authentication failed. Use demo@ommi.io / password for testing.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden">
-        
-        {/* Glow Effects */}
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-300 to-yellow-300"></div>
-        <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-orange-400 rounded-full blur-3xl opacity-50"></div>
-        
-        <div className="text-center mb-10 relative z-10">
-          <div className="flex justify-center mb-6 transform scale-125">
-             <Logo className="h-16 w-auto" variant="light" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Welcome to WorkCore</h2>
-          <p className="text-white/80 font-medium">Unified Operating System for SMEs</p>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Abstract Background Glows */}
+      <div className="absolute top-0 left-0 w-full h-full" aria-hidden="true">
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-orange-500/5 rounded-full blur-[100px]"></div>
+      </div>
+
+      <div className="dark-glass w-full max-w-[440px] p-10 lg:p-12 rounded-[48px] shadow-2xl relative z-10 animate-fade-in border border-white/5">
+        <div className="text-center mb-10">
+          <Logo className="h-10 mb-10 mx-auto" variant="light" />
+          <h2 className="text-4xl font-bold text-white tracking-tight mb-3">
+            {mode === 'login' ? 'Welcome back' : 'Start Growing'}<span className="text-orange-500">.</span>
+          </h2>
+          <p className="text-slate-400 text-sm font-medium">
+            {mode === 'login' ? 'Sign in to OMMI OS' : 'Create your SME command center'}
+          </p>
         </div>
 
-        <div className="flex bg-black/20 p-1 rounded-xl mb-8 relative z-10 backdrop-blur-sm">
-          <button 
-            onClick={() => setMode('login')}
-            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${mode === 'login' ? 'bg-white text-orange-600 shadow-md' : 'text-white/70 hover:text-white hover:bg-white/10'}`}
-          >
-            Sign In
-          </button>
-          <button 
-            onClick={() => setMode('signup')}
-            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${mode === 'signup' ? 'bg-white text-orange-600 shadow-md' : 'text-white/70 hover:text-white hover:bg-white/10'}`}
-          >
-            Create Account
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {mode === 'signup' && (
-            <div className="animate-fade-in">
-              <label className="block text-xs font-bold uppercase text-white/80 mb-1.5 ml-1">Full Name</label>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
               <input 
                 type="text" 
-                value={formData.fullName}
-                onChange={e => setFormData({...formData, fullName: e.target.value})}
-                className="w-full px-4 py-3 rounded-xl border-2 border-transparent bg-white/20 text-white placeholder-white/50 focus:bg-white focus:text-slate-900 focus:border-orange-300 outline-none transition-all font-medium"
-                placeholder="John Doe"
+                placeholder="Alex Kamau"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-slate-600 outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
                 required
               />
             </div>
           )}
-          
-          <div>
-            <label className="block text-xs font-bold uppercase text-white/80 mb-1.5 ml-1">Email Address</label>
-            <input 
-              type="email" 
-              value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border-2 border-transparent bg-white/20 text-white placeholder-white/50 focus:bg-white focus:text-slate-900 focus:border-orange-300 outline-none transition-all font-medium"
-              placeholder="name@company.com"
-              required
-            />
+
+          <div className="space-y-1">
+             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+             <div className="relative group flex items-center">
+                <input 
+                  type="email" 
+                  placeholder="name@company.com"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-slate-600 outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
+             </div>
           </div>
-          <div>
-            <label className="block text-xs font-bold uppercase text-white/80 mb-1.5 ml-1">Password</label>
-            <input 
-              type="password" 
-              value={formData.password}
-              onChange={e => setFormData({...formData, password: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border-2 border-transparent bg-white/20 text-white placeholder-white/50 focus:bg-white focus:text-slate-900 focus:border-orange-300 outline-none transition-all font-medium"
-              placeholder="••••••••"
-              required
-            />
+
+          <div className="space-y-1">
+             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
+             <div className="relative group flex items-center">
+                <input 
+                  type="password" 
+                  placeholder="••••••••"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-slate-600 outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
+             </div>
           </div>
-          
+
           <button 
-            type="submit" 
+            type="submit"
             disabled={loading}
-            className="w-full bg-white hover:bg-orange-50 text-orange-600 font-extrabold py-4 px-4 rounded-xl transition-all transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed mt-4 shadow-xl"
+            className="w-full bg-white text-slate-950 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-50 transition-all shadow-xl shadow-white/5 disabled:opacity-50 active:scale-[0.98]"
           >
-            {loading ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Start Free Trial'}
+            {loading ? 'Authenticating...' : mode === 'login' ? 'Enter Workspace' : 'Create Account'}
           </button>
         </form>
 
-        <div className="mt-8 text-center pt-6 border-t border-white/20">
-          <p className="text-xs text-white/60 font-medium">
-            © 2024 OMMI. Secure & Encrypted.
-          </p>
+        <div className="mt-10 text-center">
+          <button 
+            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+            className="text-slate-400 text-sm font-medium hover:text-white transition-colors"
+          >
+            {mode === 'login' ? "Don't have an account? " : "Already using OMMI? "}
+            <span className="text-orange-500 font-bold ml-1">{mode === 'login' ? 'Sign Up' : 'Sign In'}</span>
+          </button>
         </div>
+      </div>
+
+      <div className="absolute bottom-10 left-0 w-full flex justify-center space-x-8 opacity-20 pointer-events-none">
+        <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Encrypted</span>
+        <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Global Sync</span>
+        <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">AI Native</span>
       </div>
     </div>
   );
